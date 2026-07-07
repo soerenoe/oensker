@@ -1,0 +1,23 @@
+name: Deploy Worker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # If your worker is in a subfolder, you can set workingDirectory
+          # workingDirectory: "."
+          command: deploy
+          # Optional: specify environment, e.g. production
+          # environment: production
