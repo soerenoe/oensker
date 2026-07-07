@@ -57,10 +57,10 @@ MIT — do what you want. See [LICENSE](LICENSE) for the full text.
 ## Why "Oensker"?
 
 Oensker means "wishes" in Danish.  
-Built for sharing wishlists with friends and family - no accounts, no setup, just a link that anyone can open and use straight away. It also serves as a real-world deployed project demonstrating CI/CD and modern cloud architecture — but mostly, it’s just useful.
+Built for sharing wishlists with friends and family - no accounts, no setup, just a link that anyone can open and use straight away. The project is built on a modern serverless stack with an automated CI/CD pipeline, and is designed to be the most accessible wishlist sharing solution.
 
 ---
 
-## 🔒 Privacy
+## Privacy
 
 No tracking, no analytics, no cookies beyond the anonymous guest token (stored in your browser). The app is self‑hosted on your own Cloudflare account, so you own your data completely.
