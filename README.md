@@ -57,7 +57,7 @@ MIT — do what you want. See [LICENSE](LICENSE) for the full text.
 ## Why "Oensker"?
 
 Oensker means "wishes" in Danish.  
-Built because real-life wishlists with friends and family needed a tool that respected privacy and didn’t require everyone to create accounts. It also serves as a real-world deployed project demonstrating CI/CD and modern cloud architecture — but mostly, it’s just useful.
+Built for sharing wishlists with friends and family - no accounts, no setup, just a link that anyone can open and use straight away. It also serves as a real-world deployed project demonstrating CI/CD and modern cloud architecture — but mostly, it’s just useful.
 
 ---
 
