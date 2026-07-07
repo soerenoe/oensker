@@ -5,6 +5,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "oensker",
+	"account_id": "42ecfe798c49c982b7d95cc839c486d5",
 	"main": "src/index.js",
 	"compatibility_date": "2026-07-07",
 	"observability": {
