@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oensker — Create a Wishlist</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 480px;
+      margin: 60px auto;
+      padding: 0 20px;
+      color: #222;
+    }
+    h1 { font-size: 1.5rem; }
+    label { display: block; margin-top: 16px; font-weight: 600; }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 24px;
+      padding: 12px 20px;
+      background: #222;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover { background: #444; }
+    #result {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      display: none;
+    }
+    #result a {
+      display: block;
+      margin-top: 8px;
+      word-break: break-all;
+    }
+    .label-small {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="pageTitle">Create a wishlist</h1>
+  <form id="createForm">
+    <label for="creator_name">Your name</label>
+    <input type="text" id="creator_name" required placeholder="e.g. Anna">
+    
+    <label for="title">List title</label>
+    <input type="text" id="title" required placeholder="e.g. Anna's Birthday 2026">
+
+    <label for="event_date">Next event date</label>
+    <input type="date" id="event_date" required>
+
+    <button type="submit">Create list</button>
+  </form>
+
+  <div id="result">
+    <p><strong>Your list was created!</strong></p>
+    <p class="label-small">Your private link (keep this — lets you edit the list):</p>
+    <a id="creatorLink" href="#"></a>
+    <p class="label-small">Share this link with guests:</p>
+    <a id="guestLink" href="#"></a>
+  </div>
+
+  <script>
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const creator_name = document.getElementById('creator_name').value;
+      const title = document.getElementById('title').value;
+      const event_date = document.getElementById('event_date').value;
+
+      const res = await fetch('/lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creator_name, title, event_date })
+      });
+
+      const data = await res.json();
+
+      const creatorUrl = `${location.origin}/creator.html?list=${data.list_id}&token=${data.creator_token}`;
+      const guestUrl = `${location.origin}/guest.html?list=${data.list_id}`;
+
+      document.getElementById('creatorLink').href = creatorUrl;
+      document.getElementById('creatorLink').textContent = creatorUrl;
+      document.getElementById('guestLink').href = guestUrl;
+      document.getElementById('guestLink').textContent = guestUrl;
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('createForm').style.display = 'none';
+      document.getElementById('pageTitle').style.display = 'none';
+    });
+  </script>
+</body>
+</html>

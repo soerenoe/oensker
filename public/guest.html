@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oensker — Wishlist</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 0 20px;
+      color: #222;
+    }
+    h1 { font-size: 1.4rem; }
+    .event-date { color: #666; font-size: 0.9rem; margin-top: -8px; }
+    button {
+      padding: 10px 16px;
+      background: #222;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    button:hover { background: #444; }
+    .share-btn {
+      margin-top: 12px;
+      background: #eee;
+      color: #222;
+    }
+    .share-btn:hover { background: #ddd; }
+    .item-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .item-card:hover { background: #fafafa; }
+    .item-card.mine {
+      border-color: #222;
+      background: #f5f5f5;
+    }
+    .item-name { font-weight: 600; }
+    .item-meta { font-size: 0.85rem; color: #666; margin-top: 2px; }
+    .badge {
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    .badge.available { background: #e6f4ea; color: #1e7e34; }
+    .badge.reserved { background: #fdecea; color: #c0392b; }
+    .badge.mine { background: #222; color: white; }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 400px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .modal-box p { margin: 8px 0; }
+    .modal-box a { word-break: break-all; }
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .cancel-btn {
+      background: #eee;
+      color: #222;
+    }
+    .cancel-btn:hover { background: #ddd; }
+    label { display: block; margin-top: 12px; font-weight: 600; font-size: 0.9rem; }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="listTitle">Loading...</h1>
+  <div class="event-date" id="creatorName"></div>
+  <div class="event-date" id="eventDate"></div>
+
+  <button class="share-btn" id="shareBtn">Share this list</button>
+
+  <div id="itemsList"></div>
+
+  <!-- Modal for viewing an item and reserving/cancelling -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <h2 id="modalName"></h2>
+      <p id="modalPrice"></p>
+      <p id="modalRemark"></p>
+      <p id="modalLink"></p>
+      <p id="modalStatus"></p>
+
+      <div id="reserveSection" style="display:none;">
+        <label for="guestName">Your name (optional)</label>
+        <input type="text" id="guestName" placeholder="e.g. Anna">
+      </div>
+
+      <div class="modal-actions">
+        <button id="actionBtn"></button>
+        <button class="cancel-btn" id="closeBtn" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const listId = params.get('list');
+    let currentItem = null;
+
+    // Get or create a persistent guest token for this browser
+    let guestToken = localStorage.getItem('oensker_guest_token');
+    if (!guestToken) {
+      guestToken = crypto.randomUUID();
+      localStorage.setItem('oensker_guest_token', guestToken);
+    }
+
+    async function loadList() {
+      const res = await fetch(`/lists/${listId}/guest`);
+      if (!res.ok) {
+        document.getElementById('listTitle').textContent = 'List not found';
+        return;
+      }
+      const data = await res.json();
+      document.getElementById('listTitle').textContent = data.title;
+      document.getElementById('creatorName').textContent = `By ${data.creator_name}`;
+      document.getElementById('eventDate').textContent = `Next event: ${data.event_date}`;
+
+      const itemsList = document.getElementById('itemsList');
+      itemsList.innerHTML = '';
+      data.items.forEach(item => {
+        const isMine = item.guest_token === guestToken;
+        const isReserved = !!item.guest_token;
+
+        const card = document.createElement('div');
+        card.className = 'item-card' + (isMine ? ' mine' : '');
+        card.innerHTML = `
+          <div>
+            <div class="item-name">${item.name}</div>
+            <div class="item-meta">${item.price ? item.price : ''}</div>
+          </div>
+          <span class="badge ${isMine ? 'mine' : (isReserved ? 'reserved' : 'available')}">
+            ${isMine ? 'Reserved by you' : (isReserved ? 'Reserved' : 'Available')}
+          </span>
+        `;
+        card.addEventListener('click', () => openItemModal(item, isMine, isReserved));
+        itemsList.appendChild(card);
+      });
+    }
+
+    function openItemModal(item, isMine, isReserved) {
+      currentItem = item;
+      document.getElementById('modalName').textContent = item.name;
+      document.getElementById('modalPrice').textContent = item.price ? `Price: ${item.price}` : '';
+      document.getElementById('modalRemark').textContent = item.remark ? `Remark: ${item.remark}` : '';
+      const linkEl = document.getElementById('modalLink');
+      if (item.link) {
+        linkEl.innerHTML = `Link: <a href="${item.link}" target="_blank">${item.link}</a>`;
+      } else {
+        linkEl.innerHTML = '';
+      }
+
+      const statusEl = document.getElementById('modalStatus');
+      const reserveSection = document.getElementById('reserveSection');
+      const actionBtn = document.getElementById('actionBtn');
+
+      if (isMine) {
+        statusEl.textContent = 'You have reserved this item.';
+        reserveSection.style.display = 'none';
+        actionBtn.textContent = 'Cancel my reservation';
+        actionBtn.onclick = cancelReservation;
+      } else if (isReserved) {
+        statusEl.textContent = `Already reserved${item.guest_name ? ' by ' + item.guest_name : ''}.`;
+        reserveSection.style.display = 'none';
+        actionBtn.textContent = 'Close';
+        actionBtn.onclick = closeModal;
+      } else {
+        statusEl.textContent = 'This item is available.';
+        reserveSection.style.display = 'block';
+        document.getElementById('guestName').value = '';
+        actionBtn.textContent = 'Reserve this item';
+        actionBtn.onclick = reserveItem;
+      }
+
+      document.getElementById('modalOverlay').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').style.display = 'none';
+      currentItem = null;
+    }
+
+    async function reserveItem() {
+      const guestName = document.getElementById('guestName').value || null;
+      await fetch(`/items/${currentItem.item_id}/reserve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guest_token: guestToken, guest_name: guestName })
+      });
+      closeModal();
+      loadList();
+    }
+
+    async function cancelReservation() {
+      await fetch(`/items/${currentItem.item_id}/reserve`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guest_token: guestToken })
+      });
+      closeModal();
+      loadList();
+    }
+
+    document.getElementById('closeBtn').addEventListener('click', closeModal);
+
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+      const shareData = {
+        title: 'Wishlist',
+        text: 'Check out this wishlist!',
+        url: location.href
+      };
+      if (navigator.share) {
+        try { await navigator.share(shareData); } catch (e) { /* user cancelled */ }
+      } else {
+        navigator.clipboard.writeText(location.href);
+        alert('Link copied to clipboard!');
+      }
+    });
+
+    loadList();
+  </script>
+</body>
+</html>

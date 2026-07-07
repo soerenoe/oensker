@@ -1,0 +1,1 @@
+ALTER TABLE lists ADD COLUMN creator_name TEXT NOT NULL DEFAULT '';
