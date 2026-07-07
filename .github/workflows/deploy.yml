@@ -12,12 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Deploy with Wrangler
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          # If your worker is in a subfolder, you can set workingDirectory
-          # workingDirectory: "."
           command: deploy
-          # Optional: specify environment, e.g. production
-          # environment: production
+        env:
+          WRANGLER_INSTALL: false   # Action should not install its own Wrangler
