@@ -12,7 +12,7 @@ The list owner never sees who reserved what, so surprises stay surprises.
 - **Creator-blind by design** — The creator’s dashboard deliberately excludes reservation info. It's enforced structurally in the database queries, not just hidden in the UI.
 - **No accounts** — Guest identity is a random token stored in their browser; the creator gets a secret link. Nothing to sign up for.
 - **2‑click reserve/cancel** — Click an item, click Reserve. That’s it.
-- **Self‑expiring data** — Lists automatically reset reservations after the event date passes, and are fully deleted one year later. No stale data left behind.
+- **Self‑expiring data** — Lists automatically reset reservations after the event date passes, and are fully deleted one year later. No stale data left behind. If you want to keep your list alive, you need to update it at least once a year.
 - **Minimal, focused** — On core elements: Name, price, remark, link, and an event date.
 
 ---
@@ -21,7 +21,7 @@ The list owner never sees who reserved what, so surprises stay surprises.
 
 - **Creator link** — Add, edit, or delete items. Never sees reservations.
 - **Guest link** — See items with live availability badges, reserve or cancel in two clicks.
-- **Manual delete** — The creator can delete their list anytime via a confirmation dialog (hard to do by accident, easy when intended).
+- **Manual delete** — The creator can delete their list anytime via a confirmation dialog (hard to do by accident, easy when intended). The list creator has to delete items from the list themselves, as a reservation is no guarantee that the item is no longer relevant after the event date has passed.
 
 ---
 
