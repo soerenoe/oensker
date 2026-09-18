@@ -9,9 +9,9 @@ The list owner never sees who reserved what.
 
 ## What makes it different
 
-- **Creator-blind by design** — The creator’s dashboard deliberately excludes reservation info. It's enforced structurally in the database queries, not just hidden in the UI.
-- **No accounts** — Guest identity is a random token stored in their browser; the creator gets a secret link. Nothing to sign up for.
-- **2‑click reserve/cancel** — Click an item, click Reserve. That’s it.
+- **Creator-blind by design** — The creator’s dashboard deliberately excludes reservation info. It is enforced structurally in the database queries, not just hidden in the UI.
+- **No accounts** — Guest identity is a random token stored in their browser; the creator gets a secret link.
+- **2‑click guest reserve/cancel** — Click an item, click Reserve.
 - **Self‑expiring data** — Lists automatically reset reservations after the event date passes, and are fully deleted one year later. No stale data left behind. If you want to keep your list alive, you need to update it at least once a year.
 - **Minimal, focused** — On core elements: Name, price, remark, link, and an event date.
 
@@ -29,7 +29,7 @@ The list owner never sees who reserved what.
 
 Oensker runs entirely on [Cloudflare Workers](https://workers.cloudflare.com/) with a [D1](https://developers.cloudflare.com/d1/) database (SQLite). It fits comfortably in the free tier.
 
-### Prerequisites
+### Host prerequisites
 
 - A Cloudflare account
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/) (v4+)
@@ -42,7 +42,7 @@ Oensker runs entirely on [Cloudflare Workers](https://workers.cloudflare.com/) w
 3. Update `wrangler.jsonc` with your database ID
 4. Deploy: `npx wrangler deploy`
 
-That’s it. You’ll get your own wishlist app at your own domain or a `*.workers.dev` URL.
+You will then get your own wish list app at your own domain or a `*.workers.dev` URL.
 
 *For detailed Cloudflare setup, refer to the [Workers documentation](https://developers.cloudflare.com/workers/) and [Wrangler CLI docs](https://developers.cloudflare.com/workers/wrangler/commands/).*
 
