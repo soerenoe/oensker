@@ -1,9 +1,9 @@
 # Oensker
 
-A shareable wishlist app with anonymous reservations — no accounts, no snooping, no clutter.
+A shareable wish list app with no accounts needed.
 
 **You create a list, share a link, and guests reserve items in two clicks.**  
-The list owner never sees who reserved what, so surprises stay surprises.
+The list owner never sees who reserved what.
 
 ---
 
