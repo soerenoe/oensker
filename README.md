@@ -56,7 +56,7 @@ MIT — do what you want. See [LICENSE](LICENSE) for the full text.
 
 ## Why?
 
-Built for sharing wishlists with friends and family - no accounts, no setup, just a link that anyone can open and use straight away. The project is built on a serverless stack with an automated CI/CD pipeline, and is designed to be the most accessible wishlist sharing tool.
+Built for sharing wishlists with friends and family - no accounts, no setup, just a link that anyone can open and use straight away. The project is built on a serverless stack with an automated CI/CD pipeline, and is designed to be the most accessible wish list sharing tool: You will be the host, which takes a bit of setup, but everyone you share it with can easily make and share their own lists.
 
 ---
 
