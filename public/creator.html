@@ -7,7 +7,7 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#222222">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oensker — Manage Your List</title>
+  <title>Ønsker - oversigt</title>
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -92,56 +92,66 @@
       background: #c0392b;
     }
     .delete-btn:hover { background: #e74c3c; }
+    .hint {
+      font-size: 0.9rem;
+      color: #666;
+      line-height: 1.5;
+      margin: 0.5rem 0 1rem;
+    }
+    .hint strong { color: #222; }    
   </style>
 </head>
 <body>
-  <h1 id="listTitle">Loading...</h1>
+  <h1 id="listTitle">Indlæser...</h1>
   <div class="event-date" id="deletionNote"></div>
   <button class="cancel-btn" id="deleteListBtn" style="margin-top:8px;">Delete this list</button>
 
   <div id="itemsList"></div>
 
   <form id="addItemForm">
-    <label for="name">Item name</label>
+    <label for="name">Ønske</label>
     <input type="text" id="name" required placeholder="e.g. Bike">
 
-    <label for="price">Price (optional)</label>
+    <label for="price">Pris</label>
     <input type="text" id="price" placeholder="e.g. 300">
 
-    <label for="remark">Remark (optional)</label>
+    <label for="remark">Bemærkning</label>
     <input type="text" id="remark" placeholder="e.g. Blue, size M">
 
-    <label for="link">Link (optional)</label>
+    <label for="link">Link</label>
     <input type="url" id="link" placeholder="https://...">
 
-    <button type="submit">Add item</button>
+    <button type="submit">Tilføj ønske</button>
   </form>
 
   <div class="guest-link-box">
-    <strong>Share this link with guests:</strong><br>
+    <strong>Del dette link med gæsterne:</strong><br>
     <a id="guestLink" href="#"></a>
+    <p class="hint">
+      Dette er linket, du sender til gæsterne. De kan se listen og reservere gaver anonymt.
+    </p>
   </div>
 
   <!-- Modal for viewing/editing an item -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-box">
-      <h2>Edit item</h2>
-      <label for="editName">Item name</label>
+      <h2>Rediger ønske</h2>
+      <label for="editName">Navn</label>
       <input type="text" id="editName" required>
 
-      <label for="editPrice">Price</label>
+      <label for="editPrice">Pris</label>
       <input type="text" id="editPrice">
 
-      <label for="editRemark">Remark</label>
+      <label for="editRemark">Bemærkning</label>
       <input type="text" id="editRemark">
 
       <label for="editLink">Link</label>
       <input type="url" id="editLink">
 
       <div class="modal-actions">
-        <button id="saveBtn">Save changes</button>
-        <button class="cancel-btn" id="cancelBtn" type="button">Cancel</button>
-        <button class="delete-btn" id="deleteBtn" type="button">Delete item</button>
+        <button id="saveBtn">Gem ændringer</button>
+        <button class="cancel-btn" id="cancelBtn" type="button">Annuller</button>
+        <button class="delete-btn" id="deleteBtn" type="button">Slet ønske</button>
       </div>
     </div>
   </div>
