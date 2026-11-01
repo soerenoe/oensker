@@ -28,9 +28,9 @@ export default {
 
 				await env.oensker_db
 					.prepare(
-						"INSERT INTO lists (list_id, creator_token, title, event_date, created_at, creator_name) VALUES (?, ?, ?, ?, ?, ?)"
+						"INSERT INTO lists (list_id, creator_token, title, event_name, event_date, created_at, creator_name) VALUES (?, ?, ?, ?, ?, ?, ?)"
 					)
-					.bind(list_id, creator_token, body.title, body.event_date, created_at, body.creator_name)
+					.bind(list_id, creator_token, body.title, body.event_name || null, body.event_date, created_at, body.creator_name)
 					.run();
 
 				return json({ list_id, creator_token });

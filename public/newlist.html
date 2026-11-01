@@ -75,6 +75,9 @@
     <label for="title">Listens titel</label>
     <input type="text" id="title">
 
+    <label for="event_name">Begivenhedens navn</label>
+    <input type="text" id="event_name">
+
     <label for="event_date">Næste begivenhed</label>
     <input type="date" id="event_date" required>
 
@@ -100,11 +103,12 @@
       const creator_name = document.getElementById('creator_name').value;
       const title = document.getElementById('title').value;
       const event_date = document.getElementById('event_date').value;
+      const event_name = document.getElementById('event_name').value;
 
       const res = await fetch('/lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ creator_name, title, event_date })
+        body: JSON.stringify({ creator_name, title, event_name, event_date })
       });
 
       const data = await res.json();
@@ -112,13 +116,14 @@
       const creatorUrl = `${location.origin}/creator.html?list=${data.list_id}&token=${data.creator_token}`;
       const guestUrl = `${location.origin}/guest.html?list=${data.list_id}`;
 
-            // Save to browser dashboard
+      // Save to browser dashboard
       try {
         const stored = JSON.parse(localStorage.getItem('oensker_lists') || '[]');
         stored.unshift({
           id: data.list_id,
           token: data.creator_token,
           title: title,
+          event_name: event_name,
           event_date: event_date,
           created_at: new Date().toISOString()
         });

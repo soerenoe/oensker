@@ -175,7 +175,7 @@
             <div class="item-meta">${item.price ? item.price : ''}</div>
           </div>
           <span class="badge ${isMine ? 'mine' : (isReserved ? 'reserved' : 'available')}">
-            ${isMine ? 'Reserved by you' : (isReserved ? 'Reserved' : 'Ikke reserveret')}
+            ${isMine ? 'Reserveret af dig' : (isReserved ? 'Reserveret' : 'Ikke reserveret')}
           </span>
         `;
         card.addEventListener('click', () => openItemModal(item, isMine, isReserved));
@@ -200,12 +200,12 @@
       const actionBtn = document.getElementById('actionBtn');
 
       if (isMine) {
-        statusEl.textContent = 'You have reserved this item.';
+        statusEl.textContent = 'Du har reserveret ønsket';
         reserveSection.style.display = 'none';
-        actionBtn.textContent = 'Cancel my reservation';
+        actionBtn.textContent = 'Annuller min reservation';
         actionBtn.onclick = cancelReservation;
       } else if (isReserved) {
-        statusEl.textContent = `Already reserved${item.guest_name ? ' by ' + item.guest_name : ''}.`;
+        statusEl.textContent = `Allerede reserveret${item.guest_name ? ' af ' + item.guest_name : ''}.`;
         reserveSection.style.display = 'none';
         actionBtn.textContent = 'Close';
         actionBtn.onclick = closeModal;
