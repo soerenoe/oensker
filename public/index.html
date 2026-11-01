@@ -58,9 +58,15 @@
     });
 
     // --- 2. Dashboard Logic ---
-    const container = document.getElementById('lists-container');
+        const container = document.getElementById('lists-container');
     const raw = localStorage.getItem('oensker_lists');
     const lists = raw ? JSON.parse(raw) : [];
+
+    // Danish Date Formatter
+    function formatDanishDate(dateString) {
+      if (!dateString) return '';
+      return new Date(dateString).toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
 
     if (lists.length === 0) {
       container.innerHTML = `
@@ -70,17 +76,28 @@
         </div>
       `;
     } else {
-      container.innerHTML = lists.map(l => `
-        <div class="list-card" data-id="${l.id}">
+      container.innerHTML = lists.map(l => {
+        let subtitle = t.no_date;
+        if (l.event_name && l.event_date) {
+          subtitle = `${l.event_name} • ${formatDanishDate(l.event_date)}`;
+        } else if (l.event_date) {
+          subtitle = formatDanishDate(l.event_date);
+        } else if (l.event_name) {
+          subtitle = l.event_name;
+        }
+
+        return `
+        <div class="card">
           <h2>${escapeHtml(l.title || t.no_title)}</h2>
-          <div class="meta">${l.event_date ? t.event_prefix + escapeHtml(l.event_date) : t.no_date}</div>
+          <div class="date-badge">${escapeHtml(subtitle)}</div>
           <div class="actions">
             <a class="btn" href="/creator.html?list=${encodeURIComponent(l.id)}&token=${encodeURIComponent(l.token)}">${t.btn_edit}</a>
             <button class="btn secondary" data-copy="${l.id}">${t.btn_share}</button>
-            <button class="btn secondary" style="color: #d32f2f;" data-delete="${l.id}">${t.btn_delete}</button>
+            <button class="btn danger" data-delete="${l.id}">${t.btn_delete}</button>
           </div>
         </div>
-      `).join('');
+        `;
+      }).join('');
 
       container.addEventListener('click', async (e) => {
         const copyId = e.target.dataset.copy;
@@ -93,14 +110,13 @@
           e.target.textContent = t.btn_share_copied;
           setTimeout(() => e.target.textContent = t.btn_share, 1500);
         }
-        
+
         if (delId) {
           if (!confirm(t.confirm_delete)) return;
           const list = lists.find(x => x.id === delId);
           try {
             await fetch(`/lists/${encodeURIComponent(list.id)}?creator_token=${encodeURIComponent(list.token)}`, { method: 'DELETE' });
           } catch (err) { console.warn('Delete failed', err); }
-          
           const next = lists.filter(x => x.id !== delId);
           localStorage.setItem('oensker_lists', JSON.stringify(next));
           location.reload();

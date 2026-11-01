@@ -54,9 +54,9 @@
       <input type="url" id="editLink">
 
       <div class="modal-actions">
-        <button id="saveBtn">Gem ændringer</button>
-        <button class="cancel-btn" id="cancelBtn" type="button">Annuller</button>
-        <button class="delete-btn" id="deleteBtn" type="button">Slet ønske</button>
+        <button type="submit" class="btn" style="width: auto;">Gem ændringer</button>
+        <button type="button" class="btn secondary" style="width: auto;">Annuller</button>
+        <button type="button" class="btn danger" style="width: auto;">Slet ønske</button>
       </div>
     </div>
   </div>
@@ -199,6 +199,14 @@
     });
 
     loadList();
+
+  document.getElementById('copy-guest-link').addEventListener('click', async (e) => {
+    const url = `${location.origin}/guest.html?list=${new URLSearchParams(location.search).get('list')}`;
+    await navigator.clipboard.writeText(url);
+    const originalText = e.target.textContent;
+    e.target.textContent = 'Link kopieret';
+    setTimeout(() => e.target.textContent = originalText, 2000);
+  });
   </script>
 </body>
 </html>

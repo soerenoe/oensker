@@ -5,6 +5,7 @@
   <link rel="icon" type="image/png" href="/icon-512.png">
   <link rel="apple-touch-icon" href="/icon-512.png">
   <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/style.css">
   <meta name="theme-color" content="#222222">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ønskeliste</title>
@@ -132,13 +133,18 @@
       </div>
 
       <div class="modal-actions">
-        <button id="actionBtn"></button>
-        <button class="cancel-btn" id="closeBtn" type="button">Luk</button>
+        <button id="actionBtn" class="btn" style="width: auto;"></button>
+        <button class="btn secondary" id="closeBtn" type="button" style="width: auto;">Luk</button>
       </div>
     </div>
   </div>
 
   <script>
+    function formatDanishDate(dateString) {
+      if (!dateString) return '';
+      return new Date(dateString).toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
     const params = new URLSearchParams(location.search);
     const listId = params.get('list');
     let currentItem = null;
@@ -159,7 +165,14 @@
       const data = await res.json();
       document.getElementById('listTitle').textContent = data.title;
       document.getElementById('creatorName').textContent = `Af ${data.creator_name}`;
-      document.getElementById('eventDate').textContent = `Til ${data.event_date}`;
+
+      if (data.event_name && data.event_date) {
+        document.getElementById('eventDate').textContent = `${data.event_name} • ${formatDanishDate(data.event_date)}`;
+      } else if (data.event_date) {
+        document.getElementById('eventDate').textContent = `Til ${formatDanishDate(data.event_date)}`;
+      } else if (data.event_name) {
+        document.getElementById('eventDate').textContent = data.event_name;
+      }
 
       const itemsList = document.getElementById('itemsList');
       itemsList.innerHTML = '';
