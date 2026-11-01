@@ -101,7 +101,7 @@
     // Fetch and render the list
     async function loadList() {
       try {
-        const res = await fetch(`/lists/${listId}`);
+        const res = await fetch(`/lists/${listId}?creator_token=${creatorToken}`);
         if (!res.ok) throw new Error('Kunne ikke hente listen');
         const data = await res.json();
 
