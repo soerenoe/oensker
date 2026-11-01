@@ -125,7 +125,10 @@
       currentEditId = null;
     }
 
-    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    const cancelBtn = document.getElementById('cancelBtn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', closeModal);
+    }
 
     document.getElementById('saveBtn').addEventListener('click', async () => {
       const body = {
