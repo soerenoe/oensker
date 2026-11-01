@@ -1,51 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="da">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rediger ønskeliste – Ønsker</title>
+  
   <link rel="icon" type="image/png" href="/icon-512.png">
   <link rel="apple-touch-icon" href="/icon-512.png">
   <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="/style.css">
   <meta name="theme-color" content="#222222">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ønsker - oversigtgit push</title>
+  <link rel="stylesheet" href="/style.css">
+
+  <style>
+    /* Only keep modal-specific layout styles here, everything else is in style.css */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: var(--bg-paper);
+      padding: 2rem;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+  </style>
 </head>
 <body>
-  <a href="/" style="display: inline-block; margin-bottom: 1rem; color: #666; text-decoration: none; font-size: 0.9rem;">← Tilbage til mine lister</a>
+
+  <a href="/" style="display: inline-block; margin-bottom: 2rem; color: var(--text-muted);">← Tilbage til mine lister</a>
+
   <h1 id="listTitle">Indlæser...</h1>
-  <div class="event-date" id="deletionNote"></div>
-  <div class="actions">
+  <p class="hint" id="listMeta"></p>
+
+  <div class="actions" style="margin-bottom: 2rem;">
     <button id="copy-guest-link" class="btn secondary">Del ønskeliste</button>
-    <button id="delete-list-btn" class="btn danger">Slet</button>
+    <button id="delete-list-btn" class="btn danger">Slet liste</button>
   </div>
 
   <div id="itemsList"></div>
 
-  <form id="addItemForm">
-    <label for="name">Ønske</label>
-    <input type="text" id="name">
+  <div class="card" style="margin-top: 2rem;">
+    <h2>Tilføj ønske</h2>
+    <form id="addForm">
+      <label for="addName">Ønske</label>
+      <input type="text" id="addName" required>
 
-    <label for="price">Pris</label>
-    <input type="text" id="price">
+      <label for="addPrice">Pris (valgfrit)</label>
+      <input type="number" id="addPrice">
 
-    <label for="remark">Bemærkning</label>
-    <input type="text" id="remark">
+      <label for="addRemark">Bemærkning (valgfrit)</label>
+      <input type="text" id="addRemark">
 
-    <label for="link">Link</label>
-    <input type="url" id="link" placeholder="https://...">
+      <label for="addLink">Link (valgfrit)</label>
+      <input type="url" id="addLink" placeholder="https://...">
 
-    <button type="submit">Tilføj ønske</button>
-  </form>
+      <button type="submit" class="btn">Tilføj ønske</button>
+    </form>
+  </div>
 
-  <!-- Modal for viewing/editing an item -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-box">
+  <!-- Edit Modal -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal-content">
       <h2>Rediger ønske</h2>
       <label for="editName">Navn</label>
-      <input type="text" id="editName" required>
+      <input type="text" id="editName">
 
       <label for="editPrice">Pris</label>
-      <input type="text" id="editPrice">
+      <input type="number" id="editPrice">
 
       <label for="editRemark">Bemærkning</label>
       <input type="text" id="editRemark">
@@ -53,82 +81,84 @@
       <label for="editLink">Link</label>
       <input type="url" id="editLink">
 
-      <div class="modal-actions">
-        <button type="submit" class="btn" style="width: auto;">Gem ændringer</button>
-        <button type="button" class="btn secondary" style="width: auto;">Annuller</button>
-        <button type="button" class="btn danger" style="width: auto;">Slet ønske</button>
+      <div class="actions" style="margin-top: 1.5rem;">
+        <button id="saveBtn" class="btn">Gem ændringer</button>
+        <button id="cancelBtn" class="btn secondary" type="button">Annuller</button>
+        <button id="deleteBtn" class="btn danger" type="button">Slet ønske</button>
       </div>
     </div>
   </div>
 
   <script>
-    const copyBtn = document.getElementById('copy-guest-link');
-    if (copyBtn) {
-      copyBtn.addEventListener('click', async (e) => {
-        const url = `${location.origin}/guest.html?list=${new URLSearchParams(location.search).get('list')}`;
-        await navigator.clipboard.writeText(url);
-        const originalText = e.target.textContent;
-        e.target.textContent = 'Link kopieret';
-        setTimeout(() => e.target.textContent = originalText, 2000);
-      });
-    } else {
-      console.warn("Kunne ikke finde 'copy-guest-link' knappen i HTML'en.");
-    }
     const params = new URLSearchParams(location.search);
     const listId = params.get('list');
     const creatorToken = params.get('token');
+    
     let currentEditId = null;
+    const itemsList = document.getElementById('itemsList');
+    const modalOverlay = document.getElementById('modalOverlay');
 
+    // Fetch and render the list
     async function loadList() {
-      const res = await fetch(`/lists/${listId}/creator?creator_token=${creatorToken}`);
-      if (!res.ok) {
-        document.getElementById('listTitle').textContent = 'List not found or unauthorized';
-        return;
-      }
-      const data = await res.json();
-      document.getElementById('listTitle').textContent = data.title;
+      try {
+        const res = await fetch(`/lists/${listId}`);
+        if (!res.ok) throw new Error('Kunne ikke hente listen');
+        const data = await res.json();
 
-      const deletionDate = new Date(data.event_date);
-      deletionDate.setFullYear(deletionDate.getFullYear() + 1);
-      document.getElementById('deletionNote').textContent =
-        `Denne liste vil automatisk slettes den ${deletionDate.toISOString().split('T')[0]}, hvis den ikke opdateres inden da`;
+        document.getElementById('listTitle').textContent = data.title;
+        document.getElementById('listMeta').textContent = `Af ${data.creator_name}`;
 
-      const guestUrl = `${location.origin}/guest.html?list=${listId}`;
-      document.getElementById('guestLink').href = guestUrl;
-      document.getElementById('guestLink').textContent = guestUrl;
-
-      const itemsList = document.getElementById('itemsList');
-      itemsList.innerHTML = '';
+        itemsList.innerHTML = '';
         data.items.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'item-card';
-            card.innerHTML = `
+          const card = document.createElement('div');
+          card.className = 'item-card';
+          card.innerHTML = `
             <div class="item-name">${item.name}</div>
-            <div class="item-meta">${item.price ? item.price : ''}</div>
-            `;
-            card.addEventListener('click', () => openEditModal(item));
-            itemsList.appendChild(card);
+            <div class="item-meta">${item.price ? item.price + ' kr.' : ''} ${item.reserved_by ? '(Reserveret)' : ''}</div>
+          `;
+          card.addEventListener('click', () => openEditModal(item));
+          itemsList.appendChild(card);
         });
+      } catch (err) {
+        console.error(err);
+      }
     }
 
+    // Add Item
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        creator_token: creatorToken,
+        name: document.getElementById('addName').value,
+        price: document.getElementById('addPrice').value || null,
+        remark: document.getElementById('addRemark').value || null,
+        link: document.getElementById('addLink').value || null,
+      };
+      await fetch(`/lists/${listId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      e.target.reset();
+      loadList();
+    });
+
+    // Modal functions
     function openEditModal(item) {
       currentEditId = item.item_id;
       document.getElementById('editName').value = item.name || '';
       document.getElementById('editPrice').value = item.price || '';
       document.getElementById('editRemark').value = item.remark || '';
       document.getElementById('editLink').value = item.link || '';
-      document.getElementById('modalOverlay').style.display = 'flex';
+      modalOverlay.style.display = 'flex';
     }
 
     function closeModal() {
-      document.getElementById('modalOverlay').style.display = 'none';
+      modalOverlay.style.display = 'none';
       currentEditId = null;
     }
 
-    const cancelBtn = document.getElementById('cancelBtn');
-    if (cancelBtn) {
-      cancelBtn.addEventListener('click', closeModal);
-    }
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
 
     document.getElementById('saveBtn').addEventListener('click', async () => {
       const body = {
@@ -157,64 +187,32 @@
       loadList();
     });
 
-    document.getElementById('addItemForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const body = {
-        creator_token: creatorToken,
-        name: document.getElementById('name').value,
-        price: document.getElementById('price').value || null,
-        remark: document.getElementById('remark').value || null,
-        link: document.getElementById('link').value || null,
-      };
-
-      await fetch(`/lists/${listId}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      e.target.reset();
-      loadList();
+    // Copy Guest Link
+    document.getElementById('copy-guest-link').addEventListener('click', async (e) => {
+      const url = `${location.origin}/guest.html?list=${listId}`;
+      await navigator.clipboard.writeText(url);
+      const originalText = e.target.textContent;
+      e.target.textContent = 'Link kopieret';
+      setTimeout(() => e.target.textContent = originalText, 2000);
     });
 
-    document.getElementById('deleteListBtn').addEventListener('click', () => {
-      const confirmOverlay = document.createElement('div');
-      confirmOverlay.className = 'modal-overlay';
-      confirmOverlay.style.display = 'flex';
-      confirmOverlay.innerHTML = `
-        <div class="modal-box">
-          <p><strong>Slet listen permanent?</strong></p>
-          <p>Dette kan ikke fortrydes</p>
-          <div class="modal-actions">
-            <button id="confirmCancelBtn">Annuler</button>
-            <button class="cancel-btn" id="confirmDeleteBtn" type="button" style="font-size:0.85rem;">Slet permanent</button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(confirmOverlay);
-
-      document.getElementById('confirmCancelBtn').addEventListener('click', () => {
-        confirmOverlay.remove();
-      });
-      document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
-        await fetch(`/lists/${listId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ creator_token: creatorToken })
-        });
-        document.body.innerHTML = '<p style="text-align:center;margin-top:60px;font-family:system-ui;">This list has been deleted.</p>';
-      });
+    // Delete List
+    document.getElementById('delete-list-btn').addEventListener('click', async () => {
+      if (!confirm('Er du sikker på, at du vil slette hele listen?')) return;
+      await fetch(`/lists/${listId}?creator_token=${creatorToken}`, { method: 'DELETE' });
+      
+      // Remove from localStorage dashboard
+      try {
+        const stored = JSON.parse(localStorage.getItem('oensker_lists') || '[]');
+        const next = stored.filter(x => x.id !== listId);
+        localStorage.setItem('oensker_lists', JSON.stringify(next));
+      } catch (err) {}
+      
+      location.href = '/';
     });
 
+    // Initialize
     loadList();
-
-  document.getElementById('copy-guest-link').addEventListener('click', async (e) => {
-    const url = `${location.origin}/guest.html?list=${new URLSearchParams(location.search).get('list')}`;
-    await navigator.clipboard.writeText(url);
-    const originalText = e.target.textContent;
-    e.target.textContent = 'Link kopieret';
-    setTimeout(() => e.target.textContent = originalText, 2000);
-  });
   </script>
 </body>
 </html>
