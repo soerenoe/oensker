@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="/icon-512.png">
+  <link rel="apple-touch-icon" href="/icon-512.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#222222">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ønsker</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 480px;
+      margin: 60px auto;
+      padding: 0 20px;
+      color: #222;
+    }
+    h1 { font-size: 1.5rem; }
+    label { display: block; margin-top: 16px; font-weight: 600; }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 24px;
+      padding: 12px 20px;
+      background: #222;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover { background: #444; }
+    #result {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      display: none;
+    }
+    #result a {
+      display: block;
+      margin-top: 8px;
+      word-break: break-all;
+    }
+    .label-small {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 12px;
+    }
+    .hint {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.5;
+    margin: 0.5rem 0 1rem;
+    }
+    .hint strong { color: #222; }
+  </style>
+</head>
+<body>
+  <a href="/" style="display: inline-block; margin-bottom: 1rem; color: #666; text-decoration: none; font-size: 0.9rem;">← Tilbage til mine lister</a>
+  <h1 id="pageTitle">Opret en ønskeliste</h1>
+  <form id="createForm">
+    <label for="creator_name">Dit navn</label>
+    <input type="text" id="creator_name">
+    
+    <label for="title">Listens titel</label>
+    <input type="text" id="title">
+
+    <label for="event_date">Næste begivenhed</label>
+    <input type="date" id="event_date" required>
+
+    <button type="submit">Opret listen</button>
+  </form>
+
+  <div id="result">
+    <p class="hint">
+      <strong>Gem dette link.</strong>
+      Det er din måde at redigere listen — bogmærk det, eller send det til dig selv.
+    </p>
+    <a id="creatorLink" href="#"></a>
+    <p class="hint">
+      <strong>Del dette link med dine gæster.</strong>
+      De kan se listen og reservere gaver uden at oprette en konto.
+    </p>
+    <a id="guestLink" href="#"></a>
+  </div>
+
+  <script>
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const creator_name = document.getElementById('creator_name').value;
+      const title = document.getElementById('title').value;
+      const event_date = document.getElementById('event_date').value;
+
+      const res = await fetch('/lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creator_name, title, event_date })
+      });
+
+      const data = await res.json();
+
+      const creatorUrl = `${location.origin}/creator.html?list=${data.list_id}&token=${data.creator_token}`;
+      const guestUrl = `${location.origin}/guest.html?list=${data.list_id}`;
+
+            // Save to browser dashboard
+      try {
+        const stored = JSON.parse(localStorage.getItem('oensker_lists') || '[]');
+        stored.unshift({
+          id: data.list_id,
+          token: data.creator_token,
+          title: title,
+          event_date: event_date,
+          created_at: new Date().toISOString()
+        });
+        localStorage.setItem('oensker_lists', JSON.stringify(stored));
+      } catch (e) {
+        console.error('Kunne ikke gemme listen lokalt', e);
+      }
+
+      document.getElementById('creatorLink').href = creatorUrl;
+      document.getElementById('creatorLink').textContent = creatorUrl;
+      document.getElementById('guestLink').href = guestUrl;
+      document.getElementById('guestLink').textContent = guestUrl;
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('createForm').style.display = 'none';
+      document.getElementById('pageTitle').style.display = 'none';
+    });
+  </script>
+</body>
+</html>

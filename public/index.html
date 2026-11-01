@@ -1,124 +1,135 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="da">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="page_title">Ønsker – Mine lister</title>
+  
   <link rel="icon" type="image/png" href="/icon-512.png">
   <link rel="apple-touch-icon" href="/icon-512.png">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#222222">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ønsker</title>
+  
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      max-width: 480px;
-      margin: 60px auto;
-      padding: 0 20px;
-      color: #222;
-    }
-    h1 { font-size: 1.5rem; }
-    label { display: block; margin-top: 16px; font-weight: 600; }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 4px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 24px;
-      padding: 12px 20px;
-      background: #222;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-      width: 100%;
-    }
-    button:hover { background: #444; }
-    #result {
-      margin-top: 24px;
-      padding: 16px;
-      background: #f5f5f5;
-      border-radius: 6px;
-      display: none;
-    }
-    #result a {
-      display: block;
-      margin-top: 8px;
-      word-break: break-all;
-    }
-    .label-small {
-      font-size: 0.85rem;
-      color: #666;
-      margin-top: 12px;
-    }
-    .hint {
-    font-size: 0.9rem;
-    color: #666;
-    line-height: 1.5;
-    margin: 0.5rem 0 1rem;
-    }
-    .hint strong { color: #222; }
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; color: #222; line-height: 1.5; }
+    h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .hint { font-size: 0.95rem; color: #666; margin-bottom: 1.5rem; }
+    
+    .list-card { border: 1px solid #ddd; border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .list-card h2 { margin: 0 0 0.25rem; font-size: 1.3rem; }
+    .meta { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
+    
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    
+    /* Large, grandma-friendly buttons */
+    .btn { display: inline-block; padding: 0.75rem 1.25rem; border-radius: 6px; border: none; background: #222; color: #fff; text-decoration: none; font-size: 1rem; font-weight: 500; cursor: pointer; text-align: center; flex: 1; }
+    .btn.secondary { background: #f0f0f0; color: #222; }
+    .btn.create { display: block; width: 100%; margin-top: 2rem; padding: 1rem; font-size: 1.1rem; background: #0056b3; }
+    
+    .empty-state { text-align: center; padding: 3rem 1rem; background: #f9f9f9; border-radius: 8px; border: 2px dashed #ccc; }
+    .empty-state p { margin-bottom: 1.5rem; color: #555; }
   </style>
 </head>
 <body>
-  <h1 id="pageTitle">Opret en ønskeliste</h1>
-  <form id="createForm">
-    <label for="creator_name">Dit navn</label>
-    <input type="text" id="creator_name">
-    
-    <label for="title">Listens titel</label>
-    <input type="text" id="title">
 
-    <label for="event_date">Næste begivenhed</label>
-    <input type="date" id="event_date" required>
+  <h1 data-i18n="heading">Mine lister</h1>
+  <p class="hint" data-i18n="hint_dashboard">
+    Her finder du alle de lister, du har oprettet på denne enhed.
+  </p>
 
-    <button type="submit">Opret listen</button>
-  </form>
-
-  <div id="result">
-    <p class="hint">
-      <strong>Gem dette link.</strong>
-      Det er din måde at redigere listen — bogmærk det, eller send det til dig selv.
-    </p>
-    <a id="creatorLink" href="#"></a>
-    <p class="hint">
-      <strong>Del dette link med dine gæster.</strong>
-      De kan se listen og reservere gaver uden at oprette en konto.
-    </p>
-    <a id="guestLink" href="#"></a>
+  <div id="lists-container">
+    <!-- Lists will be injected here by JavaScript -->
   </div>
 
+  <!-- Points to newlist.html now -->
+  <a href="/newlist.html" class="btn create" data-i18n="btn_create_new">+ Opret en ny ønskeliste</a>
+
   <script>
-    document.getElementById('createForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const creator_name = document.getElementById('creator_name').value;
-      const title = document.getElementById('title').value;
-      const event_date = document.getElementById('event_date').value;
+    // --- 1. i18n Layer ---
+    const translations = {
+      da: {
+        page_title: "Ønsker – Mine lister",
+        heading: "Mine lister",
+        hint_dashboard: "Her finder du alle de lister, du har oprettet på denne enhed.",
+        btn_create_new: "+ Opret en ny ønskeliste",
+        btn_edit: "Rediger",
+        btn_share: "Kopiér gæstelink",
+        btn_share_copied: "Kopieret!",
+        btn_delete: "Slet",
+        empty_title: "Du har ingen lister endnu.",
+        empty_desc: "Opret din første ønskeliste ved at trykke på knappen nedenfor.",
+        no_title: "Uden titel",
+        no_date: "Ingen dato",
+        event_prefix: "Begivenhed: ",
+        confirm_delete: "Er du sikker på, at du vil slette denne liste? Det kan ikke fortrydes."
+      }
+      // Add 'en: { ... }' here later!
+    };
 
-      const res = await fetch('/lists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ creator_name, title, event_date })
-      });
+    // Set current language
+    const lang = localStorage.getItem('oensker_lang') || 'da';
+    const t = translations[lang];
 
-      const data = await res.json();
-
-      const creatorUrl = `${location.origin}/creator.html?list=${data.list_id}&token=${data.creator_token}`;
-      const guestUrl = `${location.origin}/guest.html?list=${data.list_id}`;
-
-      document.getElementById('creatorLink').href = creatorUrl;
-      document.getElementById('creatorLink').textContent = creatorUrl;
-      document.getElementById('guestLink').href = guestUrl;
-      document.getElementById('guestLink').textContent = guestUrl;
-      document.getElementById('result').style.display = 'block';
-      document.getElementById('createForm').style.display = 'none';
-      document.getElementById('pageTitle').style.display = 'none';
+    // Apply translations
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) el.innerHTML = t[key];
     });
+
+    // --- 2. Dashboard Logic ---
+    const container = document.getElementById('lists-container');
+    const raw = localStorage.getItem('oensker_lists');
+    const lists = raw ? JSON.parse(raw) : [];
+
+    if (lists.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <h2>${t.empty_title}</h2>
+          <p>${t.empty_desc}</p>
+        </div>
+      `;
+    } else {
+      container.innerHTML = lists.map(l => `
+        <div class="list-card" data-id="${l.id}">
+          <h2>${escapeHtml(l.title || t.no_title)}</h2>
+          <div class="meta">${l.event_date ? t.event_prefix + escapeHtml(l.event_date) : t.no_date}</div>
+          <div class="actions">
+            <a class="btn" href="/creator.html?list=${encodeURIComponent(l.id)}&token=${encodeURIComponent(l.token)}">${t.btn_edit}</a>
+            <button class="btn secondary" data-copy="${l.id}">${t.btn_share}</button>
+            <button class="btn secondary" style="color: #d32f2f;" data-delete="${l.id}">${t.btn_delete}</button>
+          </div>
+        </div>
+      `).join('');
+
+      container.addEventListener('click', async (e) => {
+        const copyId = e.target.dataset.copy;
+        const delId = e.target.dataset.delete;
+        
+        if (copyId) {
+          const list = lists.find(x => x.id === copyId);
+          const url = `${location.origin}/guest.html?list=${encodeURIComponent(list.id)}`;
+          await navigator.clipboard.writeText(url);
+          e.target.textContent = t.btn_share_copied;
+          setTimeout(() => e.target.textContent = t.btn_share, 1500);
+        }
+        
+        if (delId) {
+          if (!confirm(t.confirm_delete)) return;
+          const list = lists.find(x => x.id === delId);
+          try {
+            await fetch(`/lists/${encodeURIComponent(list.id)}?creator_token=${encodeURIComponent(list.token)}`, { method: 'DELETE' });
+          } catch (err) { console.warn('Delete failed', err); }
+          
+          const next = lists.filter(x => x.id !== delId);
+          localStorage.setItem('oensker_lists', JSON.stringify(next));
+          location.reload();
+        }
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
   </script>
 </body>
 </html>
