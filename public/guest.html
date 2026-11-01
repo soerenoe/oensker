@@ -128,7 +128,7 @@
 
       <div id="reserveSection" style="display:none;">
         <label for="guestName">Dit navn</label>
-        <input type="text" id="guestName" placeholder="e.g. Anna">
+        <input type="text" id="guestName">
       </div>
 
       <div class="modal-actions">
@@ -158,8 +158,8 @@
       }
       const data = await res.json();
       document.getElementById('listTitle').textContent = data.title;
-      document.getElementById('creatorName').textContent = `By ${data.creator_name}`;
-      document.getElementById('eventDate').textContent = `Next event: ${data.event_date}`;
+      document.getElementById('creatorName').textContent = `Af ${data.creator_name}`;
+      document.getElementById('eventDate').textContent = `Til ${data.event_date}`;
 
       const itemsList = document.getElementById('itemsList');
       itemsList.innerHTML = '';
@@ -175,7 +175,7 @@
             <div class="item-meta">${item.price ? item.price : ''}</div>
           </div>
           <span class="badge ${isMine ? 'mine' : (isReserved ? 'reserved' : 'available')}">
-            ${isMine ? 'Reserved by you' : (isReserved ? 'Reserved' : 'Available')}
+            ${isMine ? 'Reserved by you' : (isReserved ? 'Reserved' : 'Ikke reserveret')}
           </span>
         `;
         card.addEventListener('click', () => openItemModal(item, isMine, isReserved));
@@ -186,8 +186,8 @@
     function openItemModal(item, isMine, isReserved) {
       currentItem = item;
       document.getElementById('modalName').textContent = item.name;
-      document.getElementById('modalPrice').textContent = item.price ? `Price: ${item.price}` : '';
-      document.getElementById('modalRemark').textContent = item.remark ? `Remark: ${item.remark}` : '';
+      document.getElementById('modalPrice').textContent = item.price ? `Pris: ${item.price}` : '';
+      document.getElementById('modalRemark').textContent = item.remark ? `Bemærkning: ${item.remark}` : '';
       const linkEl = document.getElementById('modalLink');
       if (item.link) {
         linkEl.innerHTML = `Link: <a href="${item.link}" target="_blank">${item.link}</a>`;
@@ -210,10 +210,10 @@
         actionBtn.textContent = 'Close';
         actionBtn.onclick = closeModal;
       } else {
-        statusEl.textContent = 'This item is available.';
+        statusEl.textContent = 'Ikke reserveret';
         reserveSection.style.display = 'block';
         document.getElementById('guestName').value = '';
-        actionBtn.textContent = 'Reserve this item';
+        actionBtn.textContent = 'Reserver ønsket';
         actionBtn.onclick = reserveItem;
       }
 
