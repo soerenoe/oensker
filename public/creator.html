@@ -59,7 +59,10 @@
       <input type="text" id="addRemark">
 
       <label for="addLink">Link (valgfrit)</label>
-      <input type="url" id="addLink" placeholder="https://...">
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+        <input type="url" id="addLink" placeholder="https://..." style="margin-bottom: 0;">
+        <button type="button" id="pasteLinkBtn" class="btn secondary" style="width: auto;">Indsæt</button>
+      </div>      
 
       <button type="submit" class="btn">Tilføj ønske</button>
     </form>
@@ -209,6 +212,16 @@
       } catch (err) {}
       
       location.href = '/';
+    });
+
+    // Paste Link Button
+    document.getElementById('pasteLinkBtn').addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('addLink').value = text;
+      } catch (err) {
+        alert('Kunne ikke læse fra udklipsholderen. Giv browseren tilladelse.');
+      }
     });
 
     // Initialize

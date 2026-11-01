@@ -15,8 +15,8 @@
   <div class="event-date" id="creatorName"></div>
   <div class="event-date" id="eventDate"></div>
 
-  <button class="share-btn" id="shareBtn">Del denne liste</button>
-
+  <button id="copy-guest-link" class="btn secondary">Del ønskeliste</button>
+  
   <div id="itemsList"></div>
 
   <!-- Modal for viewing an item and reserving/cancelling -->
@@ -196,6 +196,18 @@
         alert('Link kopieret');
       }
     });
+
+    // Copy Guest Link
+    const copyBtn = document.getElementById('copy-guest-link');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async (e) => {
+        const url = location.href;
+        await navigator.clipboard.writeText(url);
+        const originalText = e.target.textContent;
+        e.target.textContent = 'Link kopieret';
+        setTimeout(() => e.target.textContent = originalText, 2000);
+      });
+    }    
 
     loadList();
   </script>
