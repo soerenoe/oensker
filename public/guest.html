@@ -7,7 +7,7 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#222222">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Oensker — Wishlist</title>
+  <title>Ønskeliste</title>
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -99,14 +99,21 @@
       font-size: 0.95rem;
       box-sizing: border-box;
     }
+    .hint {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.5;
+    margin: 0.5rem 0 1rem;
+    }
+    .hint strong { color: #222; }
   </style>
 </head>
 <body>
-  <h1 id="listTitle">Loading...</h1>
+  <h1 id="listTitle">Indlæser...</h1>
   <div class="event-date" id="creatorName"></div>
   <div class="event-date" id="eventDate"></div>
 
-  <button class="share-btn" id="shareBtn">Share this list</button>
+  <button class="share-btn" id="shareBtn">Del denne liste</button>
 
   <div id="itemsList"></div>
 
@@ -120,13 +127,13 @@
       <p id="modalStatus"></p>
 
       <div id="reserveSection" style="display:none;">
-        <label for="guestName">Your name (optional)</label>
+        <label for="guestName">Dit navn</label>
         <input type="text" id="guestName" placeholder="e.g. Anna">
       </div>
 
       <div class="modal-actions">
         <button id="actionBtn"></button>
-        <button class="cancel-btn" id="closeBtn" type="button">Close</button>
+        <button class="cancel-btn" id="closeBtn" type="button">Luk</button>
       </div>
     </div>
   </div>
@@ -251,7 +258,7 @@
         try { await navigator.share(shareData); } catch (e) { /* user cancelled */ }
       } else {
         navigator.clipboard.writeText(location.href);
-        alert('Link copied to clipboard!');
+        alert('Link kopieret');
       }
     });
 
