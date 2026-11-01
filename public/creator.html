@@ -62,13 +62,18 @@
   </div>
 
   <script>
-    document.getElementById('copy-guest-link').addEventListener('click', async (e) => {
-      const url = `${location.origin}/guest.html?list=${new URLSearchParams(location.search).get('list')}`;
-      await navigator.clipboard.writeText(url);
-      const originalText = e.target.textContent;
-      e.target.textContent = 'Link kopieret';
-      setTimeout(() => e.target.textContent = originalText, 2000);
-    });
+    const copyBtn = document.getElementById('copy-guest-link');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async (e) => {
+        const url = `${location.origin}/guest.html?list=${new URLSearchParams(location.search).get('list')}`;
+        await navigator.clipboard.writeText(url);
+        const originalText = e.target.textContent;
+        e.target.textContent = 'Link kopieret';
+        setTimeout(() => e.target.textContent = originalText, 2000);
+      });
+    } else {
+      console.warn("Kunne ikke finde 'copy-guest-link' knappen i HTML'en.");
+    }
     const params = new URLSearchParams(location.search);
     const listId = params.get('list');
     const creatorToken = params.get('token');

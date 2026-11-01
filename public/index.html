@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n="page_title">Ønsker – Mine lister</title>
-  
+  <link rel="stylesheet" href="/style.css">
   <link rel="icon" type="image/png" href="/icon-512.png">
   <link rel="apple-touch-icon" href="/icon-512.png">
   <link rel="manifest" href="/manifest.json">
@@ -19,20 +19,18 @@
   </p>
 
   <div id="lists-container">
-    <!-- Lists will be injected here by JavaScript -->
+    <!-- Lists injected here -->
   </div>
 
-  <!-- Points to newlist.html now -->
-  <a href="/newlist.html" class="btn create" data-i18n="btn_create_new">Opret en ny ønskeliste</a>
+  <a href="/newlist.html" class="btn" style="margin-top: 1rem;" data-i18n="btn_create_new">+ Opret en ny ønskeliste</a>
 
   <script>
-    // --- 1. i18n Layer ---
     const translations = {
       da: {
         page_title: "Ønsker – Mine lister",
         heading: "Mine lister",
         hint_dashboard: "Her finder du alle de lister, du har oprettet på denne enhed.",
-        btn_create_new: "Opret en ny ønskeliste",
+        btn_create_new: "+ Opret en ny ønskeliste",
         btn_edit: "Rediger",
         btn_share: "Del ønskeliste",
         btn_share_copied: "Link kopieret",
@@ -44,33 +42,28 @@
         event_prefix: "Begivenhed: ",
         confirm_delete: "Er du sikker på, at du vil slette denne liste? Det kan ikke fortrydes."
       }
-      // Add 'en: { ... }' here later!
     };
 
-    // Set current language
     const lang = localStorage.getItem('oensker_lang') || 'da';
     const t = translations[lang];
 
-    // Apply translations
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       if (t[key]) el.innerHTML = t[key];
     });
 
-    // --- 2. Dashboard Logic ---
-        const container = document.getElementById('lists-container');
-    const raw = localStorage.getItem('oensker_lists');
-    const lists = raw ? JSON.parse(raw) : [];
-
-    // Danish Date Formatter
     function formatDanishDate(dateString) {
       if (!dateString) return '';
       return new Date(dateString).toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' });
     }
 
+    const container = document.getElementById('lists-container');
+    const raw = localStorage.getItem('oensker_lists');
+    const lists = raw ? JSON.parse(raw) : [];
+
     if (lists.length === 0) {
       container.innerHTML = `
-        <div class="empty-state">
+        <div class="empty-state" style="text-align: center; padding: 3rem 1rem; border: 2px dashed var(--border); border-radius: 8px;">
           <h2>${t.empty_title}</h2>
           <p>${t.empty_desc}</p>
         </div>
