@@ -56,28 +56,40 @@
       color: #666;
       margin-top: 12px;
     }
+    .hint {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.5;
+    margin: 0.5rem 0 1rem;
+    }
+    .hint strong { color: #222; }
   </style>
 </head>
 <body>
-  <h1 id="pageTitle">Create a wishlist</h1>
+  <h1 id="pageTitle">Opret en ønskeliste</h1>
   <form id="createForm">
-    <label for="creator_name">Your name</label>
+    <label for="creator_name">Dit navn</label>
     <input type="text" id="creator_name" required placeholder="e.g. Anna">
     
-    <label for="title">List title</label>
+    <label for="title">Listens titel</label>
     <input type="text" id="title" required placeholder="e.g. Anna's Birthday 2026">
 
-    <label for="event_date">Next event date</label>
+    <label for="event_date">Næste begivenhed</label>
     <input type="date" id="event_date" required>
 
-    <button type="submit">Create list</button>
+    <button type="submit">Opret listen</button>
   </form>
 
   <div id="result">
-    <p><strong>Your list was created!</strong></p>
-    <p class="label-small">Your private link (keep this — lets you edit the list):</p>
+    <p class="hint">
+      <strong>Gem dette link.</strong>
+      Det er din måde at redigere listen — bogmærk det, eller send det til dig selv.
+    </p>
     <a id="creatorLink" href="#"></a>
-    <p class="label-small">Share this link with guests:</p>
+    <p class="hint">
+      <strong>Del dette link med dine gæster.</strong>
+      De kan se listen og reservere gaver uden at oprette en konto.
+    </p>
     <a id="guestLink" href="#"></a>
   </div>
 
