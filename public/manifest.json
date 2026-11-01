@@ -1,0 +1,17 @@
+{
+  "name": "Oensker – Ønskelister",
+  "short_name": "Oensker",
+  "description": "Del ønskelister med familie og venner – uden konto.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#222222",
+  "icons": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
