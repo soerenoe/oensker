@@ -105,19 +105,19 @@
   <a href="/" style="display: inline-block; margin-bottom: 1rem; color: #666; text-decoration: none; font-size: 0.9rem;">← Tilbage til mine lister</a>
   <h1 id="listTitle">Indlæser...</h1>
   <div class="event-date" id="deletionNote"></div>
-  <button class="cancel-btn" id="deleteListBtn" style="margin-top:8px;">Delete this list</button>
+  <button class="cancel-btn" id="deleteListBtn" style="margin-top:8px;">Slet listen</button>
 
   <div id="itemsList"></div>
 
   <form id="addItemForm">
     <label for="name">Ønske</label>
-    <input type="text" id="name" required placeholder="e.g. Bike">
+    <input type="text" id="name">
 
     <label for="price">Pris</label>
-    <input type="text" id="price" placeholder="e.g. 300">
+    <input type="text" id="price">
 
     <label for="remark">Bemærkning</label>
-    <input type="text" id="remark" placeholder="e.g. Blue, size M">
+    <input type="text" id="remark">
 
     <label for="link">Link</label>
     <input type="url" id="link" placeholder="https://...">
@@ -175,7 +175,7 @@
       const deletionDate = new Date(data.event_date);
       deletionDate.setFullYear(deletionDate.getFullYear() + 1);
       document.getElementById('deletionNote').textContent =
-        `This list will be automatically deleted on ${deletionDate.toISOString().split('T')[0]} if not updated before then.`;
+        `Denne liste vil automatisk slettes den ${deletionDate.toISOString().split('T')[0]}, hvis den ikke opdateres inden da`;
 
       const guestUrl = `${location.origin}/guest.html?list=${listId}`;
       document.getElementById('guestLink').href = guestUrl;
@@ -264,8 +264,8 @@
       confirmOverlay.style.display = 'flex';
       confirmOverlay.innerHTML = `
         <div class="modal-box">
-          <p><strong>Delete this list permanently?</strong></p>
-          <p>This cannot be undone.</p>
+          <p><strong>Slet listen permanent?</strong></p>
+          <p>Dette kan ikke fortrydes</p>
           <div class="modal-actions">
             <button id="confirmCancelBtn">Cancel</button>
             <button class="cancel-btn" id="confirmDeleteBtn" type="button" style="font-size:0.85rem;">Delete permanently</button>
