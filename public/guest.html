@@ -99,39 +99,52 @@
     }
 
     function openItemModal(item, isMine, isReserved) {
-      currentItem = item;
+      // 1. Populate the item details
       document.getElementById('modalName').textContent = item.name;
       document.getElementById('modalPrice').textContent = item.price ? `Pris: ${item.price}` : '';
       document.getElementById('modalRemark').textContent = item.remark ? `Bemærkning: ${item.remark}` : '';
-      const linkEl = document.getElementById('modalLink');
-      if (item.link) {
-        linkEl.innerHTML = `Link: <a href="${item.link}" target="_blank">${item.link}</a>`;
-      } else {
-        linkEl.innerHTML = '';
-      }
-
+      document.getElementById('modalLink').textContent = item.link ? `Link: ${item.link}` : '';
+      
+      // 2. Get the button and status elements
+      const actionBtn = document.getElementById('actionBtn');
       const statusEl = document.getElementById('modalStatus');
       const reserveSection = document.getElementById('reserveSection');
-      const actionBtn = document.getElementById('actionBtn');
 
+      // 3. Handle the logic based on reservation status
       if (isMine) {
+        // The guest viewing it is the one who reserved it
         statusEl.textContent = 'Du har reserveret ønsket';
-        reserveSection.style.display = 'none';
+        if (reserveSection) reserveSection.style.display = 'none';
+        
+        actionBtn.style.display = 'inline-flex';
         actionBtn.textContent = 'Annuller min reservation';
-        actionBtn.onclick = cancelReservation;
+        actionBtn.className = 'btn secondary'; // Make it look like a cancel action
+        actionBtn.onclick = () => cancelReservation(item.item_id);
+        
       } else if (isReserved) {
-        statusEl.textContent = `Allerede reserveret${item.guest_name ? ' af ' + item.guest_name : ''}.`;
-        reserveSection.style.display = 'none';
-        actionBtn.textContent = 'Close';
-        actionBtn.onclick = closeModal;
+        // Someone else has reserved it
+        statusEl.textContent = 'Allerede reserveret af en anden';
+        if (reserveSection) reserveSection.style.display = 'none';
+        
+        // Hide the action button entirely so they can't click it
+        actionBtn.style.display = 'none';
+        
       } else {
+        // It is not reserved by anyone yet
         statusEl.textContent = 'Ikke reserveret';
-        reserveSection.style.display = 'block';
-        document.getElementById('guestName').value = '';
-        actionBtn.textContent = 'Reserver ønsket';
-        actionBtn.onclick = reserveItem;
+        
+        // Show the button and set it to Reserve
+        actionBtn.style.display = 'inline-flex';
+        actionBtn.textContent = 'Reserver';
+        actionBtn.className = 'btn'; // Primary button style
+        actionBtn.onclick = () => {
+            // Assuming you have a function to handle the reservation
+            // If the user needs to enter a name, this should trigger that.
+            reserveItem(item.item_id); 
+        };
       }
 
+      // 4. Show the modal
       document.getElementById('modalOverlay').style.display = 'flex';
     }
 
