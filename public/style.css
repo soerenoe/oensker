@@ -67,6 +67,8 @@ label {
 
 input[type="text"], input[type="number"], input[type="date"], textarea {
   width: 100%;
+  max-width: 100%;
+  min-width: 0; /* Forces iOS to respect 100% width */
   padding: 0.75rem;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -77,6 +79,8 @@ input[type="text"], input[type="number"], input[type="date"], textarea {
   box-sizing: border-box;
   margin-bottom: 1.25rem;
   transition: border-color 0.2s;
+  -webkit-appearance: none; /* Removes iOS default styling */
+  appearance: none;
 }
 
 input:focus, textarea:focus {
@@ -110,8 +114,19 @@ input:focus, textarea:focus {
 .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
 .btn.danger:hover { background: #fdf2f2; }
 
-.actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
-.actions .btn { width: auto; flex: 1; }
+.actions { 
+  display: flex; 
+  flex-wrap: wrap; /* Allows buttons to drop to the next line if they don't fit */
+  gap: 0.75rem; 
+  margin-top: 1rem; 
+}
+
+.actions .btn { 
+  width: auto; 
+  flex: 1 1 100px; /* Grow/shrink, but try to stay at least 100px wide */
+  white-space: normal; /* Allows text to wrap inside the button */
+  text-align: center;
+}
 
 /* Badges and tiny text */
 .date-badge { 
