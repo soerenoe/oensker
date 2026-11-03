@@ -1,9 +1,11 @@
 CREATE TABLE lists (
   list_id TEXT PRIMARY KEY,
   creator_token TEXT NOT NULL,
-  title TEXT NOT NULL,
-  event_date TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  title TEXT,
+  event_name TEXT,
+  event_date TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  creator_name TEXT
 );
 
 CREATE TABLE items (

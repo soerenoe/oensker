@@ -104,7 +104,7 @@
     // Fetch and render the list
     async function loadList() {
       try {
-        const res = await fetch(`/lists/${listId}?creator_token=${creatorToken}`);
+        const res = await fetch(`/lists/${listId}/creator?creator_token=${creatorToken}`);
         if (!res.ok) throw new Error('Kunne ikke hente listen');
         const data = await res.json();
 
@@ -115,9 +115,16 @@
         data.items.forEach(item => {
           const card = document.createElement('div');
           card.className = 'item-card';
+          let dateText = '';
+          if (item.created_at) {
+            const d = new Date(item.created_at);
+            dateText = `Tilføjet: ${d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+          }
+          
           card.innerHTML = `
             <div class="item-name">${item.name}</div>
-            <div class="item-meta">${item.price ? item.price + ' kr.' : ''} ${item.reserved_by ? '(Reserveret)' : ''}</div>
+            <div class="item-meta">${item.price ? item.price + ' kr.' : ''}</div>
+            <div class="item-meta" style="font-size: 0.8rem; color: #999; margin-top: 0.5rem;">${dateText} ${item.reserved_by ? ' • Reserveret' : ''}</div>
           `;
           card.addEventListener('click', () => openEditModal(item));
           itemsList.appendChild(card);

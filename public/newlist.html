@@ -26,7 +26,7 @@
     <label for="event_date">Næste begivenhed</label>
     <input type="date" id="event_date" required>
 
-    <button type="submit">Opret listen</button>
+    <button type="submit" class="btn">Opret listen</button>
   </form>
 
   <div id="result">
@@ -58,7 +58,15 @@
 
       const data = await res.json();
 
+      // STOP if the server failed!
+      if (!res.ok || !data.list_id) {
+        alert("Der skete en fejl: " + (data.error || "Kunne ikke oprette listen"));
+        console.error("Server response:", data);
+        return; 
+      }
+
       const creatorUrl = `${location.origin}/creator.html?list=${data.list_id}&token=${data.creator_token}`;
+
       const guestUrl = `${location.origin}/guest.html?list=${data.list_id}`;
 
       // Save to browser dashboard

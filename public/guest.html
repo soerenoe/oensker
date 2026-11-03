@@ -25,13 +25,12 @@
       <h2 id="modalName"></h2>
       <p id="modalPrice"></p>
       <p id="modalRemark"></p>
-      <p id="modalLink"></p>
-      <p id="modalStatus"></p>
-
-      <div id="reserveSection" style="display:none;">
-        <label for="guestName">Dit navn</label>
-        <input type="text" id="guestName">
+      
+      <div style="margin: 1rem 0;">
+        <a id="modalLinkBtn" href="#" target="_blank" rel="noopener" class="btn secondary" style="display: inline-flex; width: auto;">Åbn link i nyt vindue</a>
       </div>
+      
+      <p id="modalStatus"></p>
 
       <div class="modal-actions">
         <button id="actionBtn" class="btn" style="width: auto;"></button>
@@ -84,10 +83,17 @@
 
         const card = document.createElement('div');
         card.className = 'item-card' + (isMine ? ' mine' : '');
+        let dateText = '';
+        if (item.created_at) {
+          const d = new Date(item.created_at);
+          dateText = `Tilføjet: ${d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+        }
+
         card.innerHTML = `
           <div>
             <div class="item-name">${item.name}</div>
-            <div class="item-meta">${item.price ? item.price : ''}</div>
+            <div class="item-meta">${item.price ? item.price + ' kr.' : ''}</div>
+            <div class="item-meta" style="font-size: 0.8rem; color: #999; margin-top: 0.5rem;">${dateText}</div>
           </div>
           <span class="badge ${isMine ? 'mine' : (isReserved ? 'reserved' : 'available')}">
             ${isMine ? 'Reserveret af dig' : (isReserved ? 'Reserveret' : 'Ikke reserveret')}
@@ -99,59 +105,57 @@
     }
 
     function openItemModal(item, isMine, isReserved) {
-      // 1. Populate text fields
       document.getElementById('modalName').textContent = item.name;
       
-      document.getElementById('modalPrice').textContent = item.price ? `Pris: ${item.price}` : '';
+      // Add "kr." to the price
+      document.getElementById('modalPrice').textContent = item.price ? `Pris: ${item.price} kr.` : '';
       document.getElementById('modalPrice').style.display = item.price ? 'block' : 'none';
       
       document.getElementById('modalRemark').textContent = item.remark ? `Bemærkning: ${item.remark}` : '';
       document.getElementById('modalRemark').style.display = item.remark ? 'block' : 'none';
       
-      // 2. Make the link clickable instead of showing the raw URL
-      const linkEl = document.getElementById('modalLink');
+      // Handle the Link Button
+      const linkBtn = document.getElementById('modalLinkBtn');
       if (item.link) {
-        linkEl.innerHTML = `Link: <a href="${item.link}" target="_blank" rel="noopener">Åbn i nyt vindue</a>`;
-        linkEl.style.display = 'block';
+        linkBtn.href = item.link;
+        linkBtn.textContent = 'Åbn link i nyt vindue';
+        linkBtn.className = 'btn secondary';
+        linkBtn.style.opacity = '1';
+        linkBtn.style.pointerEvents = 'auto';
       } else {
-        linkEl.style.display = 'none';
+        linkBtn.removeAttribute('href');
+        linkBtn.textContent = 'Intet link angivet';
+        linkBtn.className = 'btn secondary';
+        linkBtn.style.opacity = '0.5';
+        linkBtn.style.pointerEvents = 'none';
       }
-      
-      // 3. Get action elements
+
       const actionBtn = document.getElementById('actionBtn');
       const statusEl = document.getElementById('modalStatus');
-      const reserveSection = document.getElementById('reserveSection');
-      const guestNameInput = document.getElementById('guestName');
 
       // Reset UI state
-      guestNameInput.value = ''; 
       actionBtn.style.display = 'inline-flex';
 
-      // 4. Handle the logic based on who reserved it
       if (isMine) {
         statusEl.textContent = 'Du har reserveret ønsket';
-        reserveSection.style.display = 'none';
-        
         actionBtn.textContent = 'Annuller min reservation';
-        actionBtn.className = 'btn danger'; // Red outline button
+        actionBtn.className = 'btn danger';
         actionBtn.onclick = () => cancelReservation(item.item_id);
         
       } else if (isReserved) {
         statusEl.textContent = 'Allerede reserveret af en anden';
-        reserveSection.style.display = 'none';
-        
-        actionBtn.style.display = 'none'; // Hide button completely
+        actionBtn.style.display = 'none';
         
       } else {
         statusEl.textContent = 'Ikke reserveret';
-        reserveSection.style.display = 'block';
-        
         actionBtn.textContent = 'Reserver';
-        actionBtn.className = 'btn'; // Primary blue button
-        actionBtn.onclick = () => reserveItem(item.item_id);
+        actionBtn.className = 'btn';
+        
+        // THIS IS LIKELY WHERE IT CRASHED: 
+        // We need to check if your API expects item.item_id or item.id
+        actionBtn.onclick = () => reserveItem(item.item_id || item.id); 
       }
 
-      // 5. Show the modal
       document.getElementById('modalOverlay').style.display = 'flex';
     }
 
@@ -160,12 +164,12 @@
       currentItem = null;
     }
 
-    async function reserveItem() {
-      const guestName = document.getElementById('guestName').value || null;
-      await fetch(`/items/${currentItem.item_id}/reserve`, {
+    async function reserveItem(id) {
+      // We removed the guestName input, so we just send null
+      await fetch(`/items/${id}/reserve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guest_token: guestToken, guest_name: guestName })
+        body: JSON.stringify({ guest_token: guestToken, guest_name: null })
       });
       closeModal();
       loadList();
@@ -183,19 +187,22 @@
 
     document.getElementById('closeBtn').addEventListener('click', closeModal);
 
-    document.getElementById('shareBtn').addEventListener('click', async () => {
-      const shareData = {
-        title: 'Wishlist',
-        text: 'Check out this wishlist!',
-        url: location.href
-      };
-      if (navigator.share) {
-        try { await navigator.share(shareData); } catch (e) { /* user cancelled */ }
-      } else {
-        navigator.clipboard.writeText(location.href);
-        alert('Link kopieret');
-      }
-    });
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', async () => {
+        const shareData = {
+          title: 'Ønskeliste',
+          text: 'Se denne ønskeliste!',
+          url: location.href
+        };
+        if (navigator.share) {
+          try { await navigator.share(shareData); } catch (e) { /* user cancelled */ }
+        } else {
+          await navigator.clipboard.writeText(location.href);
+          alert('Link kopieret');
+        }
+      });
+    }
 
     // Copy Guest Link
     const copyBtn = document.getElementById('copy-guest-link');
