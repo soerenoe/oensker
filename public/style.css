@@ -3,8 +3,11 @@
   --bg-paper: #fcfbf9;
   --text-main: #2c2a29;
   --text-muted: #736e68;
-  --accent: #2c5e6d; /* A calm, trustworthy teal/navy */
-  --accent-hover: #1e4250;
+
+  --accent: #c85a43; 
+  --accent-hover: #a64632;
+  --success: #4a7c59;
+
   --border: #e5e0d8;
   --card-bg: #ffffff;
   --danger: #a13c3c;
@@ -229,4 +232,32 @@ input[type="number"] {
 /* Give the modal a bit more breathing room */
 .modal-box p {
   margin: 0.5rem 0;
+}
+
+/* Success button for pasted links */
+.btn.success {
+  background: var(--success);
+  color: white;
+  border-color: var(--success);
+}
+
+/* Datepicker layout */
+.date-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+input[type="date"] {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  background: #fff;
+  color: var(--text-main);
+  box-sizing: border-box;
+  margin-bottom: 1.25rem;
 }

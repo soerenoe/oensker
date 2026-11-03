@@ -29,19 +29,6 @@
     <button type="submit" class="btn">Opret listen</button>
   </form>
 
-  <div id="result">
-    <p class="hint">
-      <strong>Gem dette link.</strong>
-      Det er din måde at redigere listen — bogmærk det, eller send det til dig selv.
-    </p>
-    <a id="creatorLink" href="#"></a>
-    <p class="hint">
-      <strong>Del dette link med dine gæster.</strong>
-      De kan se listen og reservere gaver uden at oprette en konto.
-    </p>
-    <a id="guestLink" href="#"></a>
-  </div>
-
   <script>
     document.getElementById('createForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -85,14 +72,9 @@
         console.error('Kunne ikke gemme listen lokalt', e);
       }
 
-      document.getElementById('creatorLink').href = creatorUrl;
-      document.getElementById('creatorLink').textContent = 'Gå til din liste (rediger)';
-      document.getElementById('guestLink').href = guestUrl;
-      document.getElementById('guestLink').textContent = 'Se listen som gæst';
-      document.getElementById('result').style.display = 'block';
-      document.getElementById('createForm').style.display = 'none';
-      document.getElementById('pageTitle').style.display = 'none';
+      window.location.href = creatorUrl;
     });
+
   </script>
 </body>
 </html>

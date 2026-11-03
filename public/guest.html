@@ -140,7 +140,7 @@
         statusEl.textContent = 'Du har reserveret ønsket';
         actionBtn.textContent = 'Annuller min reservation';
         actionBtn.className = 'btn danger';
-        actionBtn.onclick = () => cancelReservation(item.item_id);
+        actionBtn.onclick = () => cancelReservation(item.id || item.item_id);
         
       } else if (isReserved) {
         statusEl.textContent = 'Allerede reserveret af en anden';
@@ -175,8 +175,8 @@
       loadList();
     }
 
-    async function cancelReservation() {
-      await fetch(`/items/${currentItem.item_id}/reserve`, {
+    async function cancelReservation(itemId) {
+      await fetch(`/items/${itemId}/reserve`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ guest_token: guestToken })

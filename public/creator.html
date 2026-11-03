@@ -37,7 +37,6 @@
   <a href="/" style="display: inline-block; margin-bottom: 2rem; color: var(--text-muted);">← Tilbage til mine lister</a>
 
   <h1 id="listTitle">Indlæser...</h1>
-  <p class="hint" id="listMeta"></p>
 
   <div class="actions" style="margin-bottom: 2rem;">
     <button id="copy-guest-link" class="btn secondary">Del ønskeliste</button>
@@ -59,10 +58,19 @@
       <input type="text" id="addRemark">
 
       <label for="addLink">Link (valgfrit)</label>
-      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
-        <input type="url" id="addLink" placeholder="https://..." style="margin-bottom: 0;">
-        <button type="button" id="pasteLinkBtn" class="btn secondary" style="width: auto;">Indsæt</button>
-      </div>      
+      <div id="add-link-ui" style="margin-bottom: 1.25rem;">
+        <button type="button" id="addAddLinkBtn" class="btn secondary" style="width: auto;">Tilføj link</button>
+        
+        <div id="addLinkDisplay" style="display: none; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" id="addEditLinkBtn" class="btn secondary" style="width: auto; font-size: 0.8rem; padding: 0.4rem 0.8rem;" title="Opdater med link fra klipholder">Opdater link</button>
+          <a id="addOpenLinkBtn" href="#" target="_blank" rel="noopener" style="color: var(--accent); display: inline-flex; align-items: center;" title="Åbn link i nyt vindue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          </a>
+          <span id="addLinkPreview" style="font-size: 0.85rem; color: var(--text-muted); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">...</span>
+          <button type="button" id="addRemoveLinkBtn" class="btn danger" style="width: auto; border: none; padding: 0.2rem 0.5rem; font-size: 0.8rem;">Slet</button>
+        </div>
+        <input type="hidden" id="addLink" value="">
+      </div>
 
       <button type="submit" class="btn">Tilføj ønske</button>
     </form>
@@ -82,7 +90,20 @@
       <input type="text" id="editRemark">
 
       <label for="editLink">Link</label>
-      <input type="url" id="editLink">
+      <div id="edit-link-ui" style="margin-bottom: 1rem;">
+        <button type="button" id="editAddLinkBtn" class="btn secondary" style="width: auto;">Tilføj link</button>
+        
+        <div id="editLinkDisplay" style="display: none; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" id="editChangeLinkBtn" class="btn secondary" style="width: auto; font-size: 0.8rem; padding: 0.4rem 0.8rem;" title="Opdater med link fra klipholder">Opdater link</button>
+          <a id="editOpenLinkBtn" href="#" target="_blank" rel="noopener" style="color: var(--accent); display: inline-flex; align-items: center;" title="Åbn link i nyt vindue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          </a>
+          <span id="editLinkPreview" style="font-size: 0.85rem; color: var(--text-muted); max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">...</span>
+          <button type="button" id="editRemoveLinkBtn" class="btn danger" style="width: auto; border: none; padding: 0.2rem 0.5rem; font-size: 0.8rem;">Slet</button>
+          <div style="width: 100%; font-size: 0.75rem; color: #999; margin-top: 0.25rem;">Tilføjet: <span id="editLinkDate"></span></div>
+        </div>
+        <input type="hidden" id="editLink" value="">
+      </div>
 
       <div class="actions" style="margin-top: 1.5rem;">
         <button id="saveBtn" class="btn">Gem ændringer</button>
@@ -108,9 +129,10 @@
         if (!res.ok) throw new Error('Kunne ikke hente listen');
         const data = await res.json();
 
-        document.getElementById('listTitle').textContent = data.title;
-        document.getElementById('listMeta').textContent = `Af ${data.creator_name}`;
-
+        // Safe check: only update if the elements exist
+        const titleEl = document.getElementById('listTitle');
+        if (titleEl) titleEl.textContent = data.title;
+        
         itemsList.innerHTML = '';
         data.items.forEach(item => {
           const card = document.createElement('div');
@@ -121,10 +143,18 @@
             dateText = `Tilføjet: ${d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' })}`;
           }
           
+          let linkHtml = '';
+          if (item.link) {
+            linkHtml = `<a href="${item.link}" target="_blank" rel="noopener" class="btn secondary" style="width: auto; margin-top: 0.5rem; font-size: 0.85rem; padding: 0.4rem 0.8rem;" onclick="event.stopPropagation()">Åbn link i nyt vindue</a>`;
+          } else {
+            linkHtml = `<button class="btn secondary" style="width: auto; margin-top: 0.5rem; font-size: 0.85rem; padding: 0.4rem 0.8rem; opacity: 0.5; pointer-events: none;">Intet link angivet</button>`;
+          }
+
           card.innerHTML = `
             <div class="item-name">${item.name}</div>
             <div class="item-meta">${item.price ? item.price + ' kr.' : ''}</div>
             <div class="item-meta" style="font-size: 0.8rem; color: #999; margin-top: 0.5rem;">${dateText} ${item.reserved_by ? ' • Reserveret' : ''}</div>
+            <div>${linkHtml}</div>
           `;
           card.addEventListener('click', () => openEditModal(item));
           itemsList.appendChild(card);
@@ -149,7 +179,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
+      
       e.target.reset();
+      
+      addLinkInput.value = '';
+      updateAddLinkUI();
+
       loadList();
     });
 
@@ -159,7 +194,30 @@
       document.getElementById('editName').value = item.name || '';
       document.getElementById('editPrice').value = item.price || '';
       document.getElementById('editRemark').value = item.remark || '';
-      document.getElementById('editLink').value = item.link || '';
+      
+      editLinkInput.value = item.link || '';
+      updateEditLinkUI(item.created_at);
+      
+      modalOverlay.style.display = 'flex';
+      const editBtn = document.getElementById('editPasteLinkBtn');
+      const editPreview = document.getElementById('editLinkPreview');
+      const openBtn = document.getElementById('editOpenLinkBtn');
+      
+      if (item.link) {
+        editBtn.textContent = '✓ Link indsat';
+        editBtn.classList.add('success');
+        editBtn.title = 'Rediger link';
+        editPreview.textContent = item.link;
+        editPreview.style.display = 'block';
+        openBtn.href = item.link;
+        openBtn.style.display = 'inline-flex';
+      } else {
+        editBtn.textContent = 'Indsæt link';
+        editBtn.classList.remove('success');
+        editBtn.title = 'Indsæt link';
+        editPreview.style.display = 'none';
+        openBtn.style.display = 'none';
+      }
       modalOverlay.style.display = 'flex';
     }
 
@@ -221,15 +279,132 @@
       location.href = '/';
     });
 
-    // Paste Link Button
-    document.getElementById('pasteLinkBtn').addEventListener('click', async () => {
-      try {
-        const text = await navigator.clipboard.readText();
-        document.getElementById('addLink').value = text;
-      } catch (err) {
-        alert('Kunne ikke læse fra udklipsholderen. Giv browseren tilladelse.');
+    // --- HELPER FOR TEMPORARY BUTTON STATE ---
+    function showTemporarySuccess(btn) {
+      const originalText = btn.textContent;
+      btn.textContent = '✓ Link opdateret';
+      btn.classList.add('success');
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.classList.remove('success');
+      }, 5000);
+    }
+
+    // --- ADD FORM LINK LOGIC ---
+    const addLinkInput = document.getElementById('addLink');
+    const addAddLinkBtn = document.getElementById('addAddLinkBtn');
+    const addLinkDisplay = document.getElementById('addLinkDisplay');
+    const addEditLinkBtn = document.getElementById('addEditLinkBtn');
+    const addRemoveLinkBtn = document.getElementById('addRemoveLinkBtn');
+    const addOpenLinkBtn = document.getElementById('addOpenLinkBtn');
+    const addLinkPreview = document.getElementById('addLinkPreview');
+
+    function updateAddLinkUI() {
+      const hasLink = addLinkInput.value.trim() !== '';
+      
+      if (hasLink) {
+        addAddLinkBtn.style.display = 'none';
+        addLinkDisplay.style.display = 'flex';
+        addLinkPreview.textContent = addLinkInput.value;
+        addOpenLinkBtn.href = addLinkInput.value;
+      } else {
+        addAddLinkBtn.style.display = 'inline-flex';
+        addLinkDisplay.style.display = 'none';
       }
-    });
+    }
+
+    if (addAddLinkBtn) {
+      addAddLinkBtn.addEventListener('click', async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            addLinkInput.value = text;
+            updateAddLinkUI();
+          }
+        } catch (err) {
+          alert('Kunne ikke læse fra udklipsholderen.');
+        }
+      });
+
+      addEditLinkBtn.addEventListener('click', async (e) => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            addLinkInput.value = text;
+            updateAddLinkUI();
+            showTemporarySuccess(e.target);
+          }
+        } catch (err) {
+          alert('Kunne ikke læse fra udklipsholderen.');
+        }
+      });
+
+      addRemoveLinkBtn.addEventListener('click', () => {
+        addLinkInput.value = '';
+        updateAddLinkUI();
+      });
+    }
+
+    // --- EDIT MODAL LINK LOGIC ---
+    const editLinkInput = document.getElementById('editLink');
+    const editAddLinkBtn = document.getElementById('editAddLinkBtn');
+    const editLinkDisplay = document.getElementById('editLinkDisplay');
+    const editChangeLinkBtn = document.getElementById('editChangeLinkBtn');
+    const editRemoveLinkBtn = document.getElementById('editRemoveLinkBtn');
+    const editOpenLinkBtn = document.getElementById('editOpenLinkBtn');
+    const editLinkPreview = document.getElementById('editLinkPreview');
+    const editLinkDate = document.getElementById('editLinkDate');
+
+    function updateEditLinkUI(dateString) {
+      const hasLink = editLinkInput.value.trim() !== '';
+      
+      if (hasLink) {
+        editAddLinkBtn.style.display = 'none';
+        editLinkDisplay.style.display = 'flex';
+        editLinkPreview.textContent = editLinkInput.value;
+        editOpenLinkBtn.href = editLinkInput.value;
+      } else {
+        editAddLinkBtn.style.display = 'inline-flex';
+        editLinkDisplay.style.display = 'none';
+      }
+      
+      if (dateString && editLinkDate) {
+        const d = new Date(dateString);
+        editLinkDate.textContent = d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
+      }
+    }
+
+    if (editAddLinkBtn) {
+      editAddLinkBtn.addEventListener('click', async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            editLinkInput.value = text;
+            updateEditLinkUI();
+          }
+        } catch (err) {
+          alert('Kunne ikke læse fra udklipsholderen.');
+        }
+      });
+
+      editChangeLinkBtn.addEventListener('click', async (e) => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            editLinkInput.value = text;
+            updateEditLinkUI();
+            showTemporarySuccess(e.target);
+          }
+        } catch (err) {
+          alert('Kunne ikke læse fra udklipsholderen.');
+        }
+      });
+
+      editRemoveLinkBtn.addEventListener('click', () => {
+        editLinkInput.value = '';
+        updateEditLinkUI();
+      });
+    }
 
     // Initialize
     loadList();
