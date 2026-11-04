@@ -68,7 +68,8 @@ label {
 input[type="text"], input[type="number"], input[type="date"], textarea {
   width: 100%;
   max-width: 100%;
-  min-width: 0; /* Forces iOS to respect 100% width */
+  min-width: 0;
+  min-height: 3rem;
   padding: 0.75rem;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -79,13 +80,24 @@ input[type="text"], input[type="number"], input[type="date"], textarea {
   box-sizing: border-box;
   margin-bottom: 1.25rem;
   transition: border-color 0.2s;
-  -webkit-appearance: none; /* Removes iOS default styling */
+  -webkit-appearance: none;
   appearance: none;
 }
 
 input:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* Buttons */
@@ -113,19 +125,28 @@ input:focus, textarea:focus {
 .btn.secondary:hover { background: #e5e0d8; }
 .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
 .btn.danger:hover { background: #fdf2f2; }
+.btn.success { background: var(--success); color: white; border-color: var(--success); }
 
 .actions { 
   display: flex; 
-  flex-wrap: wrap; /* Allows buttons to drop to the next line if they don't fit */
+  flex-wrap: wrap;
   gap: 0.75rem; 
   margin-top: 1rem; 
 }
 
 .actions .btn { 
   width: auto; 
-  flex: 1 1 100px; /* Grow/shrink, but try to stay at least 100px wide */
-  white-space: normal; /* Allows text to wrap inside the button */
+  flex: 1 1 100px;
+  white-space: normal;
   text-align: center;
+}
+
+/* Datepicker layout */
+.date-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 /* Badges and tiny text */
@@ -137,35 +158,90 @@ input:focus, textarea:focus {
   margin-bottom: 1rem;
 }
 
-/* Item Cards for Creator and Guest views */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  margin-top: 0.5rem; /* Reduced from 0.75rem to keep it tight to the price */
+  align-self: center;
+}
+
+.badge.available { background: #e5e0d8; color: var(--text-muted); }
+.badge.reserved { background: #fdf2f2; color: var(--danger); }
+.badge.mine { background: #eef5f7; color: var(--accent); }
+
+/* Masonry Column Layout for Items */
+#itemsList, .items-container {
+  column-width: 260px;
+  column-gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Item Cards */
 .item-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1rem;
+  padding: 1.25rem 1rem;
   cursor: pointer;
   transition: border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  break-inside: avoid; /* Stops the card from breaking across columns */
+  margin-bottom: 1.5rem; /* THIS adds the vertical spacing between cards */
 }
 
 .item-card:hover {
   border-color: var(--accent);
 }
 
-.item-name {
-  font-family: var(--font-heading);
-  font-size: 1.15rem;
-  font-weight: bold;
-  color: var(--text-main);
+/* Image sizing */
+.item-img {
+  max-width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  border-radius: 6px;
+  display: block;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.item-meta {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin-top: 0.25rem;
+/* Make cards with images span 2 rows */
+.item-card.has-image {
+  grid-row: span 2;
 }
 
-/* Modal Overlay */
+/* Make the image container fill extra space */
+.item-card.has-image .media-container {
+  flex-grow: 1; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.link-btn {
+  width: auto;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Modals */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -187,6 +263,10 @@ input:focus, textarea:focus {
   position: relative;
 }
 
+.modal-box p {
+  margin: 0.5rem 0;
+}
+
 .modal-actions {
   display: flex;
   gap: 0.75rem;
@@ -198,81 +278,35 @@ input:focus, textarea:focus {
   flex: 1;
 }
 
-/* Status Badges */
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.6rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-}
-
-.badge.available {
-  background: #e5e0d8;
+/* Upload Dropzone */
+.upload-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
   color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 1rem;
+  background: #fdfcfb;
 }
 
-.badge.reserved {
-  background: #fdf2f2;
-  color: var(--danger);
+.upload-dropzone:hover, .upload-dropzone.dragover {
+  border-color: var(--accent);
+  background: #fdf6f4;
 }
 
-.badge.mine {
-  background: #eef5f7;
-  color: var(--accent);
+.upload-dropzone p { 
+  margin: 0; 
+  font-size: 0.9rem; 
 }
 
-/* Hide number input spinners */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type="number"] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-/* Spacing for guest items */
-#itemsList, .items-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem; /* Adds space between each wish */
-  margin-top: 1.5rem;
-}
-
-/* Give the modal a bit more breathing room */
-.modal-box p {
-  margin: 0.5rem 0;
-}
-
-/* Success button for pasted links */
-.btn.success {
-  background: var(--success);
-  color: white;
-  border-color: var(--success);
-}
-
-/* Datepicker layout */
-.date-picker-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-input[type="date"] {
-  display: block;
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-family: var(--font-body);
-  font-size: 1rem;
-  background: #fff;
-  color: var(--text-main);
-  box-sizing: border-box;
-  margin-bottom: 1.25rem;
+.upload-preview {
+  display: none;
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }

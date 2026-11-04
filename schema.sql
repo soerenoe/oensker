@@ -5,7 +5,8 @@ CREATE TABLE lists (
   event_name TEXT,
   event_date TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  creator_name TEXT
+  creator_name TEXT,
+  recipient_name TEXT
 );
 
 CREATE TABLE items (

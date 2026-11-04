@@ -12,7 +12,6 @@
   <link rel="stylesheet" href="/style.css">
 
   <style>
-    /* Only keep modal-specific layout styles here, everything else is in style.css */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -30,6 +29,18 @@
       max-width: 400px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
+    .upload-dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fdfcfb;
+    }
+    .upload-dropzone:hover { border-color: var(--accent); background: #fdf6f4; }
+    .upload-preview { max-width: 200px; max-height: 200px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
@@ -50,6 +61,21 @@
     <form id="addForm">
       <label for="addName">Ønske</label>
       <input type="text" id="addName" required>
+      
+      <label>Billede (valgfrit)</label>
+      <div id="addImageWrapper">
+        <div id="addDropzoneContainer" style="display: flex; gap: 0.5rem; align-items: stretch; margin-bottom: 1.25rem;">
+          <label class="upload-dropzone" id="addDropzone" style="flex: 1; margin-bottom: 0; display: flex; align-items: center; justify-content: center;">
+            <p id="addDropText" style="margin: 0; font-size: 0.9rem;">Træk et billede hertil, eller klik for at vælge</p>
+            <input type="file" id="addImage" accept="image/*" style="display: none;">
+          </label>
+          <button type="button" id="addPasteImageBtn" class="btn secondary" style="width: auto; margin-bottom: 0; padding: 0 1rem;">Indsæt</button>
+        </div>
+        <div id="addImagePreviewContainer" style="display: none; margin-bottom: 1.25rem;">
+          <img id="addImagePreview" class="upload-preview" style="margin-bottom: 0.5rem; display: block;">
+          <button type="button" class="btn danger" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="resetAddImage()">Fjern billede</button>
+        </div>
+      </div>
 
       <label for="addPrice">Pris (valgfrit)</label>
       <input type="number" id="addPrice">
@@ -60,7 +86,6 @@
       <label for="addLink">Link (valgfrit)</label>
       <div id="add-link-ui" style="margin-bottom: 1.25rem;">
         <button type="button" id="addAddLinkBtn" class="btn secondary" style="width: auto;">Tilføj link</button>
-        
         <div id="addLinkDisplay" style="display: none; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
           <button type="button" id="addEditLinkBtn" class="btn secondary" style="width: auto; font-size: 0.8rem; padding: 0.4rem 0.8rem;" title="Opdater med link fra klipholder">Opdater link</button>
           <a id="addOpenLinkBtn" href="#" target="_blank" rel="noopener" style="color: var(--accent); display: inline-flex; align-items: center;" title="Åbn link i nyt vindue">
@@ -78,10 +103,26 @@
 
   <!-- Edit Modal -->
   <div id="modalOverlay" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-box" style="background: var(--bg-paper); padding: 2rem; border-radius: 8px; width: 100%; max-width: 450px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
       <h2>Rediger ønske</h2>
+      
       <label for="editName">Navn</label>
       <input type="text" id="editName">
+      
+      <label>Billede (valgfrit)</label>
+      <div id="editImageWrapper">
+        <div id="editDropzoneContainer" style="display: flex; gap: 0.5rem; align-items: stretch; margin-bottom: 1.25rem;">
+          <label class="upload-dropzone" id="editDropzone" style="flex: 1; margin-bottom: 0; display: flex; align-items: center; justify-content: center;">
+            <p id="editDropText" style="margin: 0; font-size: 0.9rem;">Træk et billede hertil, eller klik for at vælge</p>
+            <input type="file" id="editImage" accept="image/*" style="display: none;">
+          </label>
+          <button type="button" id="editPasteImageBtn" class="btn secondary" style="width: auto; margin-bottom: 0; padding: 0 1rem;">Indsæt</button>
+        </div>
+        <div id="editImagePreviewContainer" style="display: none; margin-bottom: 1.25rem;">
+          <img id="editImagePreview" class="upload-preview" style="margin-bottom: 0.5rem; display: block;">
+          <button type="button" class="btn danger" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="resetEditImage()">Fjern billede</button>
+        </div>
+      </div>
 
       <label for="editPrice">Pris</label>
       <input type="number" id="editPrice">
@@ -92,7 +133,6 @@
       <label for="editLink">Link</label>
       <div id="edit-link-ui" style="margin-bottom: 1rem;">
         <button type="button" id="editAddLinkBtn" class="btn secondary" style="width: auto;">Tilføj link</button>
-        
         <div id="editLinkDisplay" style="display: none; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
           <button type="button" id="editChangeLinkBtn" class="btn secondary" style="width: auto; font-size: 0.8rem; padding: 0.4rem 0.8rem;" title="Opdater med link fra klipholder">Opdater link</button>
           <a id="editOpenLinkBtn" href="#" target="_blank" rel="noopener" style="color: var(--accent); display: inline-flex; align-items: center;" title="Åbn link i nyt vindue">
@@ -122,39 +162,50 @@
     const itemsList = document.getElementById('itemsList');
     const modalOverlay = document.getElementById('modalOverlay');
 
-    // Fetch and render the list
     async function loadList() {
+      if (!listId || !creatorToken) {
+        document.getElementById('listTitle').textContent = 'Listen blev ikke fundet';
+        return;
+      }
       try {
         const res = await fetch(`/lists/${listId}/creator?creator_token=${creatorToken}`);
         if (!res.ok) throw new Error('Kunne ikke hente listen');
         const data = await res.json();
 
-        // Safe check: only update if the elements exist
         const titleEl = document.getElementById('listTitle');
         if (titleEl) titleEl.textContent = data.title;
         
         itemsList.innerHTML = '';
         data.items.forEach(item => {
           const card = document.createElement('div');
-          card.className = 'item-card';
+          // Add the 'has-image' class if there is a photo URL
+          const hasImage = item.photo_url && item.photo_url.startsWith('/images/');
+          card.className = 'item-card' + (hasImage ? ' has-image' : '');
+          
           let dateText = '';
           if (item.created_at) {
             const d = new Date(item.created_at);
             dateText = `Tilføjet: ${d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' })}`;
           }
           
-          let linkHtml = '';
-          if (item.link) {
-            linkHtml = `<a href="${item.link}" target="_blank" rel="noopener" class="btn secondary" style="width: auto; margin-top: 0.5rem; font-size: 0.85rem; padding: 0.4rem 0.8rem;" onclick="event.stopPropagation()">Åbn link i nyt vindue</a>`;
-          } else {
-            linkHtml = `<button class="btn secondary" style="width: auto; margin-top: 0.5rem; font-size: 0.85rem; padding: 0.4rem 0.8rem; opacity: 0.5; pointer-events: none;">Intet link angivet</button>`;
+          let mediaHtml = '';
+          let imgTag = '';
+          
+          // Strict check: Only render if it's an actual uploaded image path
+          if (item.photo_url && item.photo_url.startsWith('/images/')) {
+            imgTag = `<img src="${item.photo_url}" class="item-img">`;
+          }
+          
+          if (imgTag) {
+            mediaHtml = `<div class="media-container">${imgTag}</div>`;
           }
 
           card.innerHTML = `
             <div class="item-name">${item.name}</div>
-            <div class="item-meta">${item.price ? item.price + ' kr.' : ''}</div>
-            <div class="item-meta" style="font-size: 0.8rem; color: #999; margin-top: 0.5rem;">${dateText} ${item.reserved_by ? ' • Reserveret' : ''}</div>
-            <div>${linkHtml}</div>
+            ${mediaHtml}
+            <div class="item-footer">
+              <div>${item.price ? item.price + ' kr.' : ''}</div>
+            </div>
           `;
           card.addEventListener('click', () => openEditModal(item));
           itemsList.appendChild(card);
@@ -164,16 +215,142 @@
       }
     }
 
+    // --- IMAGE COMPRESSION & UPLOAD ---
+    function compressImage(file, maxWidth, maxHeight, quality) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+            if (width > height) {
+              if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+            } else {
+              if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+              resolve(new File([blob], "upload.jpg", { type: "image/jpeg" }));
+            }, "image/jpeg", quality);
+          };
+        };
+        reader.onerror = reject;
+      });
+    }
+
+    function setupImageHandler(prefix) {
+      const dropzone = document.getElementById(`${prefix}Dropzone`);
+      const input = document.getElementById(`${prefix}Image`);
+      const dropzoneContainer = document.getElementById(`${prefix}DropzoneContainer`);
+      const previewContainer = document.getElementById(`${prefix}ImagePreviewContainer`);
+      const preview = document.getElementById(`${prefix}ImagePreview`);
+      const pasteBtn = document.getElementById(`${prefix}PasteImageBtn`);
+      const text = document.getElementById(`${prefix}DropText`);
+
+      if (!dropzone || !input) return;
+
+      window[`reset_${prefix}_image`] = () => {
+        input.value = '';
+        preview.src = '';
+        previewContainer.style.display = 'none';
+        dropzoneContainer.style.display = 'flex';
+        if(text) text.textContent = 'Træk et billede hertil, eller klik for at vælge';
+      };
+      
+      // Expose globally for the onclick attributes
+      if (prefix === 'add') window.resetAddImage = window.reset_add_image;
+      if (prefix === 'edit') window.resetEditImage = window.reset_edit_image;
+
+      dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--accent)'; });
+      dropzone.addEventListener('dragleave', () => dropzone.style.borderColor = 'var(--border)');
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--border)';
+        if (e.dataTransfer.files.length) { handleFile(e.dataTransfer.files[0]); }
+      });
+
+      input.addEventListener('change', () => {
+        if (input.files.length) { handleFile(input.files[0]); }
+      });
+
+      if (pasteBtn) {
+        pasteBtn.addEventListener('click', async () => {
+          try {
+            const clipboardItems = await navigator.clipboard.read();
+            for (const item of clipboardItems) {
+              for (const type of item.types) {
+                if (type.startsWith('image/')) {
+                  const blob = await item.getType(type);
+                  handleFile(new File([blob], "pasted.jpg", { type: "image/jpeg" }));
+                  return;
+                }
+              }
+            }
+            alert("Kunne ikke finde et billede i udklipsholderen.");
+          } catch (err) {
+            alert("Kunne ikke læse fra udklipsholderen.");
+          }
+        });
+      }
+
+      async function handleFile(file) {
+        try {
+          if(text) text.textContent = 'Behandler...';
+          const compressedFile = await compressImage(file, 800, 800, 0.7);
+          
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(compressedFile);
+          input.files = dataTransfer.files;
+
+          if(preview) {
+            preview.src = URL.createObjectURL(compressedFile);
+            previewContainer.style.display = 'block';
+            dropzoneContainer.style.display = 'none';
+          }
+        } catch (err) {
+          if(text) text.textContent = 'Kunne ikke læse filen.';
+        }
+      }
+    }
+
+    setupImageHandler('add');
+    setupImageHandler('edit');
+
     // Add Item
     document.getElementById('addForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      let photo_url = null;
+      const fileInput = document.getElementById('addImage');
+      
+      if (fileInput && fileInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append("image", fileInput.files[0]);
+        const uploadRes = await fetch('/upload', { method: 'POST', body: formData });
+        if (!uploadRes.ok) {
+          alert("Billedet kunne ikke uploades.");
+          return;
+        }
+        const uploadData = await uploadRes.json();
+        if (uploadData.url) photo_url = uploadData.url;
+      }
+
       const body = {
         creator_token: creatorToken,
         name: document.getElementById('addName').value,
         price: document.getElementById('addPrice').value || null,
         remark: document.getElementById('addRemark').value || null,
         link: document.getElementById('addLink').value || null,
+        photo_url: photo_url
       };
+      
       await fetch(`/lists/${listId}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -181,43 +358,31 @@
       });
       
       e.target.reset();
-      
-      addLinkInput.value = '';
-      updateAddLinkUI();
-
+      window.resetAddImage();
+      if(addLinkInput) addLinkInput.value = '';
+      if(typeof updateAddLinkUI === 'function') updateAddLinkUI();
       loadList();
     });
 
-    // Modal functions
     function openEditModal(item) {
       currentEditId = item.item_id;
       document.getElementById('editName').value = item.name || '';
       document.getElementById('editPrice').value = item.price || '';
       document.getElementById('editRemark').value = item.remark || '';
       
-      editLinkInput.value = item.link || '';
-      updateEditLinkUI(item.created_at);
-      
-      modalOverlay.style.display = 'flex';
-      const editBtn = document.getElementById('editPasteLinkBtn');
-      const editPreview = document.getElementById('editLinkPreview');
-      const openBtn = document.getElementById('editOpenLinkBtn');
-      
-      if (item.link) {
-        editBtn.textContent = '✓ Link indsat';
-        editBtn.classList.add('success');
-        editBtn.title = 'Rediger link';
-        editPreview.textContent = item.link;
-        editPreview.style.display = 'block';
-        openBtn.href = item.link;
-        openBtn.style.display = 'inline-flex';
-      } else {
-        editBtn.textContent = 'Indsæt link';
-        editBtn.classList.remove('success');
-        editBtn.title = 'Indsæt link';
-        editPreview.style.display = 'none';
-        openBtn.style.display = 'none';
+      window.resetEditImage();
+
+      if (item.photo_url) {
+        document.getElementById('editImagePreview').src = item.photo_url;
+        document.getElementById('editImagePreviewContainer').style.display = 'block';
+        document.getElementById('editDropzoneContainer').style.display = 'none';
       }
+      
+      if(editLinkInput) {
+        editLinkInput.value = item.link || '';
+        if(typeof updateEditLinkUI === 'function') updateEditLinkUI(item.created_at);
+      }
+      
       modalOverlay.style.display = 'flex';
     }
 
@@ -229,13 +394,34 @@
     document.getElementById('cancelBtn').addEventListener('click', closeModal);
 
     document.getElementById('saveBtn').addEventListener('click', async () => {
+      let photo_url = null;
+      const editImgPreview = document.getElementById('editImagePreview');
+      
+      // Only grab the image if it actually exists and is a real image path
+      if (editImgPreview.style.display !== 'none' && editImgPreview.src && editImgPreview.src.includes('/images/')) {
+        photo_url = editImgPreview.src;
+      }
+      
+      const fileInput = document.getElementById('editImage');
+      if (fileInput && fileInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append("image", fileInput.files[0]);
+        const uploadRes = await fetch('/upload', { method: 'POST', body: formData });
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          if (uploadData.url) photo_url = uploadData.url;
+        }
+      }
+
       const body = {
         creator_token: creatorToken,
         name: document.getElementById('editName').value,
         price: document.getElementById('editPrice').value || null,
         remark: document.getElementById('editRemark').value || null,
         link: document.getElementById('editLink').value || null,
+        photo_url: photo_url
       };
+      
       await fetch(`/items/${currentEditId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -255,21 +441,25 @@
       loadList();
     });
 
-    // Copy Guest Link
+    // --- SMART SHARE ---
     document.getElementById('copy-guest-link').addEventListener('click', async (e) => {
       const url = `${location.origin}/guest.html?list=${listId}`;
-      await navigator.clipboard.writeText(url);
-      const originalText = e.target.textContent;
-      e.target.textContent = 'Link kopieret';
-      setTimeout(() => e.target.textContent = originalText, 2000);
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile && navigator.share) {
+        try { await navigator.share({ title: 'Ønskeliste', url: url }); } catch (err) { }
+      } else {
+        await navigator.clipboard.writeText(url);
+        const originalText = e.target.textContent;
+        e.target.textContent = 'Link kopieret';
+        setTimeout(() => e.target.textContent = originalText, 2000);
+      }
     });
 
-    // Delete List
     document.getElementById('delete-list-btn').addEventListener('click', async () => {
       if (!confirm('Er du sikker på, at du vil slette hele listen?')) return;
       await fetch(`/lists/${listId}?creator_token=${creatorToken}`, { method: 'DELETE' });
       
-      // Remove from localStorage dashboard
       try {
         const stored = JSON.parse(localStorage.getItem('oensker_lists') || '[]');
         const next = stored.filter(x => x.id !== listId);
@@ -279,7 +469,7 @@
       location.href = '/';
     });
 
-    // --- HELPER FOR TEMPORARY BUTTON STATE ---
+    // --- LINK LOGIC ---
     function showTemporarySuccess(btn) {
       const originalText = btn.textContent;
       btn.textContent = '✓ Link opdateret';
@@ -290,120 +480,69 @@
       }, 5000);
     }
 
-    // --- ADD FORM LINK LOGIC ---
     const addLinkInput = document.getElementById('addLink');
-    const addAddLinkBtn = document.getElementById('addAddLinkBtn');
-    const addLinkDisplay = document.getElementById('addLinkDisplay');
-    const addEditLinkBtn = document.getElementById('addEditLinkBtn');
-    const addRemoveLinkBtn = document.getElementById('addRemoveLinkBtn');
-    const addOpenLinkBtn = document.getElementById('addOpenLinkBtn');
-    const addLinkPreview = document.getElementById('addLinkPreview');
+    const editLinkInput = document.getElementById('editLink');
+
+    if (document.getElementById('addAddLinkBtn')) {
+      document.getElementById('addAddLinkBtn').addEventListener('click', async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) { addLinkInput.value = text; updateAddLinkUI(); }
+        } catch (err) { alert('Kunne ikke læse udklipsholder.'); }
+      });
+      document.getElementById('addEditLinkBtn').addEventListener('click', async (e) => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) { addLinkInput.value = text; updateAddLinkUI(); showTemporarySuccess(e.target); }
+        } catch (err) { alert('Kunne ikke læse udklipsholder.'); }
+      });
+      document.getElementById('addRemoveLinkBtn').addEventListener('click', () => { addLinkInput.value = ''; updateAddLinkUI(); });
+    }
+
+    if (document.getElementById('editAddLinkBtn')) {
+      document.getElementById('editAddLinkBtn').addEventListener('click', async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) { editLinkInput.value = text; updateEditLinkUI(); }
+        } catch (err) { alert('Kunne ikke læse udklipsholder.'); }
+      });
+      document.getElementById('editChangeLinkBtn').addEventListener('click', async (e) => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) { editLinkInput.value = text; updateEditLinkUI(); showTemporarySuccess(e.target); }
+        } catch (err) { alert('Kunne ikke læse udklipsholder.'); }
+      });
+      document.getElementById('editRemoveLinkBtn').addEventListener('click', () => { editLinkInput.value = ''; updateEditLinkUI(); });
+    }
 
     function updateAddLinkUI() {
-      const hasLink = addLinkInput.value.trim() !== '';
-      
-      if (hasLink) {
-        addAddLinkBtn.style.display = 'none';
-        addLinkDisplay.style.display = 'flex';
-        addLinkPreview.textContent = addLinkInput.value;
-        addOpenLinkBtn.href = addLinkInput.value;
+      if (!addLinkInput) return;
+      if (addLinkInput.value.trim() !== '') {
+        document.getElementById('addAddLinkBtn').style.display = 'none';
+        document.getElementById('addLinkDisplay').style.display = 'flex';
+        document.getElementById('addLinkPreview').textContent = addLinkInput.value;
+        document.getElementById('addOpenLinkBtn').href = addLinkInput.value;
       } else {
-        addAddLinkBtn.style.display = 'inline-flex';
-        addLinkDisplay.style.display = 'none';
+        document.getElementById('addAddLinkBtn').style.display = 'inline-flex';
+        document.getElementById('addLinkDisplay').style.display = 'none';
       }
     }
-
-    if (addAddLinkBtn) {
-      addAddLinkBtn.addEventListener('click', async () => {
-        try {
-          const text = await navigator.clipboard.readText();
-          if (text) {
-            addLinkInput.value = text;
-            updateAddLinkUI();
-          }
-        } catch (err) {
-          alert('Kunne ikke læse fra udklipsholderen.');
-        }
-      });
-
-      addEditLinkBtn.addEventListener('click', async (e) => {
-        try {
-          const text = await navigator.clipboard.readText();
-          if (text) {
-            addLinkInput.value = text;
-            updateAddLinkUI();
-            showTemporarySuccess(e.target);
-          }
-        } catch (err) {
-          alert('Kunne ikke læse fra udklipsholderen.');
-        }
-      });
-
-      addRemoveLinkBtn.addEventListener('click', () => {
-        addLinkInput.value = '';
-        updateAddLinkUI();
-      });
-    }
-
-    // --- EDIT MODAL LINK LOGIC ---
-    const editLinkInput = document.getElementById('editLink');
-    const editAddLinkBtn = document.getElementById('editAddLinkBtn');
-    const editLinkDisplay = document.getElementById('editLinkDisplay');
-    const editChangeLinkBtn = document.getElementById('editChangeLinkBtn');
-    const editRemoveLinkBtn = document.getElementById('editRemoveLinkBtn');
-    const editOpenLinkBtn = document.getElementById('editOpenLinkBtn');
-    const editLinkPreview = document.getElementById('editLinkPreview');
-    const editLinkDate = document.getElementById('editLinkDate');
 
     function updateEditLinkUI(dateString) {
-      const hasLink = editLinkInput.value.trim() !== '';
-      
-      if (hasLink) {
-        editAddLinkBtn.style.display = 'none';
-        editLinkDisplay.style.display = 'flex';
-        editLinkPreview.textContent = editLinkInput.value;
-        editOpenLinkBtn.href = editLinkInput.value;
+      if (!editLinkInput) return;
+      if (editLinkInput.value.trim() !== '') {
+        document.getElementById('editAddLinkBtn').style.display = 'none';
+        document.getElementById('editLinkDisplay').style.display = 'flex';
+        document.getElementById('editLinkPreview').textContent = editLinkInput.value;
+        document.getElementById('editOpenLinkBtn').href = editLinkInput.value;
       } else {
-        editAddLinkBtn.style.display = 'inline-flex';
-        editLinkDisplay.style.display = 'none';
+        document.getElementById('editAddLinkBtn').style.display = 'inline-flex';
+        document.getElementById('editLinkDisplay').style.display = 'none';
       }
-      
-      if (dateString && editLinkDate) {
+      if (dateString && document.getElementById('editLinkDate')) {
         const d = new Date(dateString);
-        editLinkDate.textContent = d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
+        document.getElementById('editLinkDate').textContent = d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
       }
-    }
-
-    if (editAddLinkBtn) {
-      editAddLinkBtn.addEventListener('click', async () => {
-        try {
-          const text = await navigator.clipboard.readText();
-          if (text) {
-            editLinkInput.value = text;
-            updateEditLinkUI();
-          }
-        } catch (err) {
-          alert('Kunne ikke læse fra udklipsholderen.');
-        }
-      });
-
-      editChangeLinkBtn.addEventListener('click', async (e) => {
-        try {
-          const text = await navigator.clipboard.readText();
-          if (text) {
-            editLinkInput.value = text;
-            updateEditLinkUI();
-            showTemporarySuccess(e.target);
-          }
-        } catch (err) {
-          alert('Kunne ikke læse fra udklipsholderen.');
-        }
-      });
-
-      editRemoveLinkBtn.addEventListener('click', () => {
-        editLinkInput.value = '';
-        updateEditLinkUI();
-      });
     }
 
     // Initialize

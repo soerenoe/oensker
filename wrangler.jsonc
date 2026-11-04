@@ -27,6 +27,15 @@
 		"assets": {
 		"directory": "./public/",
 		"binding": "ASSETS"
+	},
+	"r2_buckets": [
+		{
+		"binding": "oensker_images",
+		"bucket_name": "oensker-images"
+		}
+	],
+	"vars": {
+		"ADMIN_PASSWORD": "changeme"
 	}
 	/**
 	 * Smart Placement

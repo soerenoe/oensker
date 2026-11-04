@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="da">
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/png" href="/icon-512.png">
@@ -23,12 +23,16 @@
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-box">
       <h2 id="modalName"></h2>
-      <p id="modalPrice"></p>
-      <p id="modalRemark"></p>
+      
+      <img id="modalImage" style="display: none; max-width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 1rem;">
       
       <div style="margin: 1rem 0;">
         <a id="modalLinkBtn" href="#" target="_blank" rel="noopener" class="btn secondary" style="display: inline-flex; width: auto;">Åbn link i nyt vindue</a>
       </div>
+      
+      <p id="modalPrice"></p>
+      <p id="modalRemark"></p>
+      <div id="modalDate" class="item-footer" style="margin-top: 0.5rem; margin-bottom: 1rem;"></div>
       
       <p id="modalStatus"></p>
 
@@ -36,7 +40,6 @@
         <button id="actionBtn" class="btn" style="width: auto;"></button>
         <button class="btn secondary" id="closeBtn" type="button" style="width: auto;">Luk</button>
       </div>
-
     </div>
   </div>
 
@@ -60,20 +63,20 @@
     async function loadList() {
       const res = await fetch(`/lists/${listId}/guest`);
       if (!res.ok) {
-        document.getElementById('listTitle').textContent = 'List not found';
+        document.getElementById('listTitle').textContent = 'Listen blev ikke fundet';
         return;
       }
       const data = await res.json();
       document.getElementById('listTitle').textContent = data.title;
       document.getElementById('creatorName').textContent = `Af ${data.creator_name}`;
 
-      if (data.event_name && data.event_date) {
-        document.getElementById('eventDate').textContent = `${data.event_name} • ${formatDanishDate(data.event_date)}`;
-      } else if (data.event_date) {
-        document.getElementById('eventDate').textContent = `Til ${formatDanishDate(data.event_date)}`;
-      } else if (data.event_name) {
-        document.getElementById('eventDate').textContent = data.event_name;
-      }
+      let dateStr = data.event_date ? formatDanishDate(data.event_date) : '';
+      let eventStr = data.event_name ? data.event_name : '';
+      let finalString = '';
+      if (eventStr && dateStr) finalString = `Til ${eventStr} ${dateStr}`;
+      else if (dateStr) finalString = `Til ${dateStr}`;
+      else if (eventStr) finalString = `Til ${eventStr}`;
+      document.getElementById('eventDate').textContent = finalString;
 
       const itemsList = document.getElementById('itemsList');
       itemsList.innerHTML = '';
@@ -82,18 +85,34 @@
         const isReserved = !!item.guest_token;
 
         const card = document.createElement('div');
-        card.className = 'item-card' + (isMine ? ' mine' : '');
+        // Add the 'has-image' class if there is a photo URL
+        const hasImage = item.photo_url && item.photo_url.startsWith('/images/');
+        card.className = 'item-card' + (hasImage ? ' has-image' : '') + (isMine ? ' mine' : '');
+        
         let dateText = '';
         if (item.created_at) {
           const d = new Date(item.created_at);
           dateText = `Tilføjet: ${d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' })}`;
         }
 
+        // Add the image thumbnail to the card
+        let mediaHtml = '';
+        let imgTag = '';
+        
+        // Strict check: Only render if it's an actual uploaded image path
+        if (item.photo_url && item.photo_url.startsWith('/images/')) {
+          imgTag = `<img src="${item.photo_url}" class="item-img">`;
+        }
+        
+        if (imgTag) {
+          mediaHtml = `<div class="media-container">${imgTag}</div>`;
+        }
+
         card.innerHTML = `
-          <div>
-            <div class="item-name">${item.name}</div>
-            <div class="item-meta">${item.price ? item.price + ' kr.' : ''}</div>
-            <div class="item-meta" style="font-size: 0.8rem; color: #999; margin-top: 0.5rem;">${dateText}</div>
+          <div class="item-name">${item.name}</div>
+          ${mediaHtml}
+          <div class="item-footer">
+            <div>${item.price ? item.price + ' kr.' : ''}</div>
           </div>
           <span class="badge ${isMine ? 'mine' : (isReserved ? 'reserved' : 'available')}">
             ${isMine ? 'Reserveret af dig' : (isReserved ? 'Reserveret' : 'Ikke reserveret')}
@@ -107,8 +126,23 @@
     function openItemModal(item, isMine, isReserved) {
       document.getElementById('modalName').textContent = item.name;
       
-      // Add "kr." to the price
-      document.getElementById('modalPrice').textContent = item.price ? `Pris: ${item.price} kr.` : '';
+      // Handle the Image in the modal
+      const modalImg = document.getElementById('modalImage');
+      if (item.photo_url) {
+        modalImg.src = item.photo_url;
+        modalImg.style.display = 'block';
+      } else {
+        modalImg.style.display = 'none';
+      }
+
+      let dateText = '';
+      if (item.created_at) {
+        const d = new Date(item.created_at);
+        dateText = `Tilføjet: ${d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+      }
+      document.getElementById('modalDate').textContent = dateText;
+
+      document.getElementById('modalPrice').textContent = item.price ? `${item.price} kr.` : '';
       document.getElementById('modalPrice').style.display = item.price ? 'block' : 'none';
       
       document.getElementById('modalRemark').textContent = item.remark ? `Bemærkning: ${item.remark}` : '';
@@ -141,18 +175,13 @@
         actionBtn.textContent = 'Annuller min reservation';
         actionBtn.className = 'btn danger';
         actionBtn.onclick = () => cancelReservation(item.id || item.item_id);
-        
       } else if (isReserved) {
         statusEl.textContent = 'Allerede reserveret af en anden';
         actionBtn.style.display = 'none';
-        
       } else {
         statusEl.textContent = 'Ikke reserveret';
         actionBtn.textContent = 'Reserver';
         actionBtn.className = 'btn';
-        
-        // THIS IS LIKELY WHERE IT CRASHED: 
-        // We need to check if your API expects item.item_id or item.id
         actionBtn.onclick = () => reserveItem(item.item_id || item.id); 
       }
 
@@ -165,7 +194,6 @@
     }
 
     async function reserveItem(id) {
-      // We removed the guestName input, so we just send null
       await fetch(`/items/${id}/reserve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -187,32 +215,25 @@
 
     document.getElementById('closeBtn').addEventListener('click', closeModal);
 
-    const shareBtn = document.getElementById('shareBtn');
-    if (shareBtn) {
-      shareBtn.addEventListener('click', async () => {
-        const shareData = {
-          title: 'Ønskeliste',
-          text: 'Se denne ønskeliste!',
-          url: location.href
-        };
-        if (navigator.share) {
-          try { await navigator.share(shareData); } catch (e) { /* user cancelled */ }
-        } else {
-          await navigator.clipboard.writeText(location.href);
-          alert('Link kopieret');
-        }
-      });
-    }
-
-    // Copy Guest Link
+    // --- SMART SHARE (Guest View) ---
     const copyBtn = document.getElementById('copy-guest-link');
     if (copyBtn) {
       copyBtn.addEventListener('click', async (e) => {
         const url = location.href;
-        await navigator.clipboard.writeText(url);
-        const originalText = e.target.textContent;
-        e.target.textContent = 'Link kopieret';
-        setTimeout(() => e.target.textContent = originalText, 2000);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile && navigator.share) {
+          try { 
+            await navigator.share({ title: 'Ønskeliste', url: url }); 
+          } catch (err) { 
+            // User cancelled
+          }
+        } else {
+          await navigator.clipboard.writeText(url);
+          const originalText = e.target.textContent;
+          e.target.textContent = 'Link kopieret';
+          setTimeout(() => e.target.textContent = originalText, 2000);
+        }
       });
     }    
 

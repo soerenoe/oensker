@@ -12,6 +12,32 @@ export default {
 			});
 
 		try {
+			// POST /upload — upload an image to R2
+			if (path === "/upload" && method === "POST") {
+				const formData = await request.formData();
+				const file = formData.get("image");
+				if (!file) return json({ error: "No image provided" }, 400);
+
+				const key = crypto.randomUUID() + '-' + file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+				await env.oensker_images.put(key, file.stream(), {
+					httpMetadata: { contentType: file.type }
+				});
+
+				return json({ url: `/images/${key}` });
+			}
+
+			// GET /images/:key — serve an image from R2
+			if (path.startsWith("/images/") && method === "GET") {
+				const key = path.replace("/images/", "");
+				const object = await env.oensker_images.get(key);
+				
+				if (!object) return new Response("Not found", { status: 404 });
+				
+				return new Response(object.body, {
+					headers: { "Content-Type": object.httpMetadata?.contentType || "application/octet-stream" }
+				});
+			}
+
 			// POST /lists — create a new list
 			if (path === "/lists" && method === "POST") {
 				const body = await request.json();
@@ -50,15 +76,9 @@ export default {
 				if (list.creator_token !== body.creator_token)
 					return json({ error: "Unauthorized" }, 403);
 
-				const oneYearFromNow = new Date();
-				oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-				if (new Date(body.event_date) > oneYearFromNow) {
-					return json({ error: "Event date must be within 1 year from now" }, 400);
-				}
-
 				await env.oensker_db
-					.prepare("UPDATE lists SET title = ?, event_date = ? WHERE list_id = ?")
-					.bind(body.title, body.event_date, list_id)
+					.prepare("UPDATE lists SET title = ?, event_name = ?, event_date = ? WHERE list_id = ?")
+					.bind(body.title, body.event_name || null, body.event_date, list_id)
 					.run();
 
 				return json({ success: true });
@@ -254,7 +274,7 @@ export default {
 
 				await env.oensker_db
 					.prepare(
-						`UPDATE items SET name = ?, price = ?, category = ?, remark = ?, link = ?
+						`UPDATE items SET name = ?, price = ?, category = ?, remark = ?, link = ?, photo_url = ?
 						 WHERE item_id = ?`
 					)
 					.bind(
@@ -263,6 +283,7 @@ export default {
 						body.category || null,
 						body.remark || null,
 						body.link || null,
+						body.photo_url || null,
 						item_id
 					)
 					.run();
@@ -273,7 +294,11 @@ export default {
 			// DELETE /lists/:id — creator manually deletes their list
 			if (path.match(/^\/lists\/[^/]+$/) && method === "DELETE") {
 				const list_id = path.split("/")[2];
-				const body = await request.json();
+				let body = {};
+				try { body = await request.json(); } catch(e) {}
+				
+				const token = body.creator_token || url.searchParams.get("creator_token");
+				const auth = url.searchParams.get("auth");
 
 				const list = await env.oensker_db
 					.prepare("SELECT creator_token FROM lists WHERE list_id = ?")
@@ -281,8 +306,12 @@ export default {
 					.first();
 
 				if (!list) return json({ error: "List not found" }, 404);
-				if (list.creator_token !== body.creator_token)
+				
+				// Allow if creator token matches OR if admin password is valid
+				const isAdmin = auth === env.ADMIN_PASSWORD;
+				if (list.creator_token !== token && !isAdmin) {
 					return json({ error: "Unauthorized" }, 403);
+				}
 
 				await env.oensker_db
 					.prepare(`DELETE FROM reservations WHERE item_id IN (SELECT item_id FROM items WHERE list_id = ?)`)
@@ -292,6 +321,26 @@ export default {
 				await env.oensker_db.prepare("DELETE FROM lists WHERE list_id = ?").bind(list_id).run();
 
 				return json({ success: true });
+			}
+
+			// GET /admin/lists — Admin dashboard
+			if (path === "/admin/lists" && method === "GET") {
+				if (url.searchParams.get("auth") !== env.ADMIN_PASSWORD) {
+					return json({ error: "Unauthorized" }, 401);
+				}
+				const lists = await env.oensker_db.prepare(
+					`SELECT lists.*, 
+					 COUNT(items.item_id) as item_count,
+					 SUM(CASE WHEN items.photo_url IS NOT NULL THEN 1 ELSE 0 END) as image_count
+					 FROM lists LEFT JOIN items ON lists.list_id = items.list_id
+					 GROUP BY lists.list_id ORDER BY lists.created_at DESC`
+				).all();
+
+				const totalLists = lists.results.length;
+				const totalItems = lists.results.reduce((sum, l) => sum + l.item_count, 0);
+				const totalImages = lists.results.reduce((sum, l) => sum + (l.image_count || 0), 0);
+
+				return json({ lists: lists.results, stats: { totalLists, totalItems, totalImages } });
 			}
 
 			return json({ error: "Not found" }, 404);
