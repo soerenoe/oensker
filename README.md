@@ -56,4 +56,4 @@ Built for sharing wishlists with friends and family - no accounts, no setup, jus
 
 ## Privacy
 
-No tracking, no analytics, no cookies beyond the anonymous guest token (stored in your browser). The app is self‑hosted on your own Cloudflare account, so you own your data.
+No tracking, no analytics, no cookies beyond the anonymous guest token (stored in your browser). The app is self‑hosted on your own Cloudflare account, so you own your data, and the data of list creators you choose to share it with and host for.
