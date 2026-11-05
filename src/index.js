@@ -12,11 +12,119 @@ export default {
 			});
 
 		try {
+			// Block the root URL to hide the app
+			if (path === "/" || path === "/index.html") {
+				return new Response("Not Found", { status: 404 });
+			}
+
+			// Block the creator page if there is no invite code in the URL
+			if (path === "/newlist-p2q8.html" && !url.searchParams.has("invite")) {
+				return new Response("Not Found", { status: 404 });
+			}
+
+			// POST /admin/creators — generate a new invite code
+			if (path === "/admin/creators" && method === "POST") {
+				const body = await request.json();
+				const auth = url.searchParams.get("auth");
+				if (auth !== env.ADMIN_PASSWORD) return json({ error: "Unauthorized" }, 401);
+
+				const creator_id = crypto.randomUUID();
+				const invite_code = crypto.randomUUID().split("-")[0]; // Short, easy to type code
+
+				await env.oensker_db
+					.prepare("INSERT INTO creators (creator_id, name, invite_code) VALUES (?, ?, ?)")
+					.bind(creator_id, body.name, invite_code)
+					.run();
+
+				return json({ success: true, invite_code });
+			}
+
+			// GET /admin/creators — list all creators
+			if (path === "/admin/creators" && method === "GET") {
+				const auth = url.searchParams.get("auth");
+				if (auth !== env.ADMIN_PASSWORD) return json({ error: "Unauthorized" }, 401);
+
+				const creators = await env.oensker_db.prepare("SELECT * FROM creators ORDER BY created_at DESC").all();
+				return json({ creators: creators.results });
+			}
+
+			// DELETE /admin/creators/:id — revoke a creator's access
+			if (path.match(/^\/admin\/creators\/[^/]+$/) && method === "DELETE") {
+				const creator_id = path.split("/")[3];
+				const auth = url.searchParams.get("auth");
+				if (auth !== env.ADMIN_PASSWORD) return json({ error: "Unauthorized" }, 401);
+
+				await env.oensker_db.prepare("DELETE FROM creators WHERE creator_id = ?").bind(creator_id).run();
+				return json({ success: true });
+			}
+
+			// POST /lists — create a new list
+			if (path === "/lists" && method === "POST") {
+				const body = await request.json();
+
+				// 1. Verify the invite code
+				if (!body.invite_code) {
+					return json({ error: "Adgangskode mangler" }, 401);
+				}
+
+				const creator = await env.oensker_db
+					.prepare("SELECT creator_id, name FROM creators WHERE invite_code = ?")
+					.bind(body.invite_code)
+					.first();
+
+				if (!creator) {
+					return json({ error: "Ugyldig adgangskode" }, 401);
+				}
+
+				const oneYearFromNow = new Date();
+				oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+				if (new Date(body.event_date) > oneYearFromNow) {
+					return json({ error: "Event date must be within 1 year from now" }, 400);
+				}
+
+				const list_id = crypto.randomUUID();
+				const creator_token = crypto.randomUUID();
+				const created_at = new Date().toISOString();
+
+				// 2. Save the list with the creator's info
+				await env.oensker_db
+					.prepare(
+						"INSERT INTO lists (list_id, creator_token, title, event_name, event_date, created_at, creator_name, creator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+					)
+					.bind(
+						list_id, 
+						creator_token, 
+						body.title, 
+						body.event_name || null, 
+						body.event_date, 
+						created_at, 
+						creator.name, 
+						creator.creator_id
+					)
+					.run();
+
+				return json({ list_id, creator_token });
+			}
+
 			// POST /upload — upload an image to R2
 			if (path === "/upload" && method === "POST") {
 				const formData = await request.formData();
 				const file = formData.get("image");
-				if (!file) return json({ error: "No image provided" }, 400);
+				const creatorToken = formData.get("creator_token");
+
+				if (!file || !creatorToken) {
+					return json({ error: "Missing image or token" }, 400);
+				}
+
+				// Verify the token belongs to a real list
+				const list = await env.oensker_db
+					.prepare("SELECT list_id FROM lists WHERE creator_token = ?")
+					.bind(creatorToken)
+					.first();
+
+				if (!list) {
+					return json({ error: "Unauthorized" }, 403);
+				}
 
 				const key = crypto.randomUUID() + '-' + file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
 				await env.oensker_images.put(key, file.stream(), {
@@ -36,30 +144,6 @@ export default {
 				return new Response(object.body, {
 					headers: { "Content-Type": object.httpMetadata?.contentType || "application/octet-stream" }
 				});
-			}
-
-			// POST /lists — create a new list
-			if (path === "/lists" && method === "POST") {
-				const body = await request.json();
-
-				const oneYearFromNow = new Date();
-				oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-				if (new Date(body.event_date) > oneYearFromNow) {
-					return json({ error: "Event date must be within 1 year from now" }, 400);
-				}
-
-				const list_id = crypto.randomUUID();
-				const creator_token = crypto.randomUUID();
-				const created_at = new Date().toISOString();
-
-				await env.oensker_db
-					.prepare(
-						"INSERT INTO lists (list_id, creator_token, title, event_name, event_date, created_at, creator_name) VALUES (?, ?, ?, ?, ?, ?, ?)"
-					)
-					.bind(list_id, creator_token, body.title, body.event_name || null, body.event_date, created_at, body.creator_name)
-					.run();
-
-				return json({ list_id, creator_token });
 			}
 
 			// PATCH /lists/:id — edit list title/date (creator only)
@@ -120,6 +204,15 @@ export default {
 					.first();
 
 				if (!list) return json({ error: "List not found" }, 404);
+
+				// --- NEW: Log the view ---
+				const ip = request.headers.get("cf-connecting-ip") || "unknown";
+				const view_id = crypto.randomUUID();
+				await env.oensker_db
+					.prepare("INSERT INTO list_views (view_id, list_id, ip_address) VALUES (?, ?, ?)")
+					.bind(view_id, list_id, ip)
+					.run();
+				// --------------------------
 
 				const items = await env.oensker_db
 					.prepare(
@@ -328,11 +421,15 @@ export default {
 				if (url.searchParams.get("auth") !== env.ADMIN_PASSWORD) {
 					return json({ error: "Unauthorized" }, 401);
 				}
+				
 				const lists = await env.oensker_db.prepare(
-					`SELECT lists.*, 
+					`SELECT lists.*, creators.name as creator_name, 
 					 COUNT(items.item_id) as item_count,
-					 SUM(CASE WHEN items.photo_url IS NOT NULL THEN 1 ELSE 0 END) as image_count
-					 FROM lists LEFT JOIN items ON lists.list_id = items.list_id
+					 SUM(CASE WHEN items.photo_url IS NOT NULL AND items.photo_url != '' THEN 1 ELSE 0 END) as image_count,
+					 (SELECT COUNT(DISTINCT ip_address) FROM list_views WHERE list_views.list_id = lists.list_id) as unique_views
+					 FROM lists 
+					 LEFT JOIN items ON lists.list_id = items.list_id
+					 LEFT JOIN creators ON lists.creator_id = creators.creator_id
 					 GROUP BY lists.list_id ORDER BY lists.created_at DESC`
 				).all();
 

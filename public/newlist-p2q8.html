@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
   <link rel="icon" type="image/png" href="/icon-512.png">
   <link rel="apple-touch-icon" href="/icon-512.png">
   <link rel="manifest" href="/manifest.json">
@@ -11,7 +12,7 @@
   <title>Ønsker</title>
 </head>
 <body>
-  <a href="/" style="display: inline-block; margin-bottom: 1rem; color: #666; text-decoration: none; font-size: 0.9rem;">← Tilbage til mine lister</a>
+  <a href="/dashboard-x7y2.html" style="display: inline-block; margin-bottom: 1rem; color: #666; text-decoration: none; font-size: 0.9rem;">← Tilbage til mine lister</a>
   <h1 id="pageTitle">Opret en ønskeliste</h1>
   <form id="createForm">
     <label for="creator_name">Dit navn</label>
@@ -32,6 +33,23 @@
   <script>
     document.getElementById('createForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const params = new URLSearchParams(location.search);
+      const inviteCode = params.get('invite');
+
+      // If no invite code is present in the URL, lock the page
+      if (!inviteCode) {
+        document.getElementById('createForm').style.display = 'none';
+        document.getElementById('pageTitle').textContent = 'Adgang nægtet';
+        
+        const warning = document.createElement('p');
+        warning.className = 'hint';
+        warning.style.color = 'var(--danger)';
+        warning.textContent = 'Du skal bruge et gyldigt invitationslink for at oprette en ønskeliste. Kontakt administratoren for at få et link.';
+        
+        document.getElementById('pageTitle').parentNode.insertBefore(warning, document.getElementById('createForm'));
+      }
+
+      const invite_code = inviteCode; // Uses the code from the URL
       const creator_name = document.getElementById('creator_name').value;
       const title = document.getElementById('title').value;
       const event_date = document.getElementById('event_date').value;
@@ -40,7 +58,7 @@
       const res = await fetch('/lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ creator_name, title, event_name, event_date })
+        body: JSON.stringify({ invite_code, creator_name, title, event_name, event_date })
       });
 
       const data = await res.json();
@@ -52,9 +70,9 @@
         return; 
       }
 
-      const creatorUrl = `${location.origin}/creator.html?list=${data.list_id}&token=${data.creator_token}`;
+      const creatorUrl = `${location.origin}/creator-w5n1.html?list=${data.list_id}&token=${data.creator_token}`;
 
-      const guestUrl = `${location.origin}/guest.html?list=${data.list_id}`;
+      const guestUrl = `${location.origin}/guest-t3z6.html?list=${data.list_id}`;
 
       // Save to browser dashboard
       try {
@@ -74,6 +92,16 @@
 
       window.location.href = creatorUrl;
     });
+
+    // Get invite code from URL
+    const urlParams = new URLSearchParams(location.search);
+    const inviteCode = urlParams.get('invite');
+
+    if (!inviteCode) {
+      document.body.innerHTML = '<div style="text-align: center; margin-top: 5rem; font-family: system-ui;"><h1>404 Not Found</h1><p>The requested URL was not found on this server.</p></div>';
+      // Stop executing the rest of the script
+      throw new Error("No invite code");
+    }
 
   </script>
 </body>

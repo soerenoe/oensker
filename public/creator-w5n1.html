@@ -2,6 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="utf-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rediger ønskeliste – Ønsker</title>
   
@@ -45,7 +46,7 @@
 </head>
 <body>
 
-  <a href="/" style="display: inline-block; margin-bottom: 2rem; color: var(--text-muted);">← Tilbage til mine lister</a>
+  <a href="/dashboard-x7y2.html" style="display: inline-block; margin-bottom: 2rem; color: var(--text-muted);">← Tilbage til mine lister</a>
 
   <h1 id="listTitle">Indlæser...</h1>
 
@@ -333,6 +334,7 @@
       if (fileInput && fileInput.files.length > 0) {
         const formData = new FormData();
         formData.append("image", fileInput.files[0]);
+        formData.append("creator_token", creatorToken);
         const uploadRes = await fetch('/upload', { method: 'POST', body: formData });
         if (!uploadRes.ok) {
           alert("Billedet kunne ikke uploades.");
@@ -406,6 +408,7 @@
       if (fileInput && fileInput.files.length > 0) {
         const formData = new FormData();
         formData.append("image", fileInput.files[0]);
+        formData.append("creator_token", creatorToken);
         const uploadRes = await fetch('/upload', { method: 'POST', body: formData });
         if (uploadRes.ok) {
           const uploadData = await uploadRes.json();
@@ -443,7 +446,7 @@
 
     // --- SMART SHARE ---
     document.getElementById('copy-guest-link').addEventListener('click', async (e) => {
-      const url = `${location.origin}/guest.html?list=${listId}`;
+      const url = `${location.origin}/guest-t3z6.html?list=${listId}`;
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
       if (isMobile && navigator.share) {
@@ -466,7 +469,7 @@
         localStorage.setItem('oensker_lists', JSON.stringify(next));
       } catch (err) {}
       
-      location.href = '/';
+      location.href = '/dashboard-x7y2.html';
     });
 
     // --- LINK LOGIC ---

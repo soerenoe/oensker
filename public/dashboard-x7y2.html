@@ -2,6 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="utf-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n="page_title">Ønsker – Mine lister</title>
   <link rel="stylesheet" href="/style.css">
@@ -21,7 +22,7 @@
     <!-- Lists injected here -->
   </div>
 
-  <a href="/newlist.html" class="btn" style="margin-top: 1rem;" data-i18n="btn_create_new">Opret en ny ønskeliste</a>
+  <a href="/newlist-p2q8.html" class="btn" style="margin-top: 1rem;" data-i18n="btn_create_new">Opret en ny ønskeliste</a>
 
   <!-- Edit List Modal -->
   <div id="editListModal" class="modal-overlay">
@@ -130,7 +131,7 @@
             <h2>${escapeHtml(l.title || t.no_title)}</h2>
             <div class="date-badge">${escapeHtml(subtitle)}</div>
             <div class="actions">
-              <a class="btn" href="/creator.html?list=${encodeURIComponent(l.id)}&token=${encodeURIComponent(l.token)}">${t.btn_edit}</a>
+              <a class="btn" href="/creator-w5n1.html?list=${encodeURIComponent(l.id)}&token=${encodeURIComponent(l.token)}">${t.btn_edit}</a>
               <button class="btn secondary" data-editinfo="${l.id}">${t.btn_edit_info}</button>
               <button class="btn secondary" data-copy="${l.id}">${t.btn_share}</button>
               <button class="btn danger" data-delete="${l.id}">${t.btn_delete}</button>
@@ -154,7 +155,7 @@
       
       if (copyId) {
         const list = lists.find(x => x.id === copyId);
-        const url = `${location.origin}/guest.html?list=${encodeURIComponent(list.id)}`;
+        const url = `${location.origin}/guest-t3z6.html?list=${encodeURIComponent(list.id)}`;
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         if (isMobile && navigator.share) {

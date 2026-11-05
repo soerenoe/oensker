@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin – Ønsker</title>
+  <link rel="icon" type="image/png" href="/icon-512.png">
+  <link rel="apple-touch-icon" href="/icon-512.png">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .admin-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+    .admin-table th, .admin-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .admin-table th { font-weight: 600; background: #f4f1eb; }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel</h1>
+  <p class="hint">Her kan du administrere alle lister og se ressourceforbrug.</p>
+  
+  <div class="card">
+    <h2>System Status</h2>
+    <p><strong>Antal lister:</strong> <span id="totalLists">0</span></p>
+    <p><strong>Antal ønsker:</strong> <span id="totalItems">0</span></p>
+    <p><strong>Antal uploadede billeder:</strong> <span id="totalImages">0</span></p>
+    <p><strong>Estimeret lagerforbrug:</strong> <span id="totalStorage">0 KB</span></p>
+  </div>
+
+  <div class="card" style="margin-top: 1.5rem;">
+    <h2>Inviter andre til at lave ønskelister</h2>
+    <p class="hint">Opret et personligt link til dem, du vil give lov til at lave lister.</p>
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+      <input type="text" id="newCreatorName" placeholder="Navn" style="margin-bottom: 0;">
+      <button id="createInviteBtn" class="btn" style="width: auto; white-space: nowrap;">Opret link</button>
+    </div>
+    <div id="inviteResult" style="display: none; padding: 1rem; background: #eef5f7; border-radius: 6px; margin-bottom: 1rem;">
+      <div style="font-weight: bold; color: var(--accent); margin-bottom: 0.5rem;">Link oprettet! Send dette link til personen:</div>
+      <button id="copyInviteBtn" class="btn" style="width: auto; margin-bottom: 0.5rem;">Kopier link</button>
+      <div id="generatedCode" style="font-size: 0.85rem; color: var(--text-muted); font-style: italic; word-break: break-all;"></div>
+    </div>
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Skaber</th>
+          <th>Liste</th>
+          <th>Oprettet</th>
+          <th>Ønsker</th>
+          <th>Billeder</th>
+          <th>Unikke Besøg</th>
+          <th>Handling</th>
+        </tr>
+      </thead>
+      <tbody id="adminListBody">
+        <!-- Injected via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const adminPassword = prompt("Indtast admin adgangskode:");
+    if (!adminPassword) { window.location.href = "/dashboard-x7y2.html"; }
+
+    async function loadAdmin() {
+      try {
+        const res = await fetch(`/admin/lists?auth=${adminPassword}`);
+        if (res.status === 401) { alert("Forkert adgangskode"); window.location.href = "/dashboard-x7y2.html"; return; }
+        
+        const data = await res.json();
+        document.getElementById('totalLists').textContent = data.stats.totalLists;
+        document.getElementById('totalItems').textContent = data.stats.totalItems;
+        document.getElementById('totalImages').textContent = data.stats.totalImages;
+        
+        // Estimate storage: ~2KB per text item, ~100KB per image
+        const estimatedKB = (data.stats.totalItems * 2) + (data.stats.totalImages * 100);
+        let storageText = `${estimatedKB} KB`;
+        if (estimatedKB > 1024) storageText = `${(estimatedKB / 1024).toFixed(2)} MB`;
+        
+        document.getElementById('totalStorage').textContent = storageText;
+
+        const tbody = document.getElementById('adminListBody');
+        tbody.innerHTML = data.lists.map(l => `
+          <tr>
+            <td>${l.creator_name || 'Ukendt'}</td>
+            <td>${l.title}</td>
+            <td>${new Date(l.created_at).toLocaleDateString('da-DK')}</td>
+            <td>${l.item_count}</td>
+            <td>${l.image_count}</td>
+            <td>${l.unique_views}</td> <!-- NEW -->
+            <td><button class="btn danger" style="width: auto; padding: 0.2rem 0.5rem;" onclick="deleteList('${l.list_id}')">Slet</button></td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteList(id) {
+      if (!confirm("Er du sikker på, at du vil slette denne liste?")) return;
+      await fetch(`/lists/${id}?creator_token=admin&auth=${adminPassword}`, { method: 'DELETE' });
+      loadAdmin();
+    }
+
+    document.getElementById('createInviteBtn').addEventListener('click', async () => {
+      const name = document.getElementById('newCreatorName').value;
+      if (!name) return alert('Skriv et navn først.');
+      
+      const res = await fetch(`/admin/creators?auth=${adminPassword}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const fullUrl = `${location.origin}/newlist-p2q8.html?invite=${data.invite_code}`;
+        
+        document.getElementById('generatedCode').textContent = fullUrl;
+        document.getElementById('inviteResult').style.display = 'block';
+        document.getElementById('newCreatorName').value = '';
+        
+        // Add the copy functionality
+        const copyBtn = document.getElementById('copyInviteBtn');
+        copyBtn.onclick = async () => {
+          await navigator.clipboard.writeText(fullUrl);
+          copyBtn.textContent = 'Link kopieret!';
+          setTimeout(() => copyBtn.textContent = 'Kopier link', 2000);
+        };
+      }
+    });
+
+    loadAdmin();
+  </script>
+</body>
+</html>
