@@ -2,7 +2,7 @@
   "name": "Oensker – Ønskelister",
   "short_name": "Oensker",
   "description": "Del ønskelister med familie og venner – uden konto.",
-  "start_url": "/",
+  "start_url": "/dashboard-x7y2.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#222222",
