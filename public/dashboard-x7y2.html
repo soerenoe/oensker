@@ -46,12 +46,19 @@
   </div>
 
   <script>
-    // Check if an invite code was passed from the Admin link
+    // Check if an invite code was passed, or grab it from local storage
     const urlParams = new URLSearchParams(location.search);
-    const inviteCode = urlParams.get('invite');
+    let inviteCode = urlParams.get('invite');
+
+    if (inviteCode) {
+      // Save it for future PWA visits!
+      localStorage.setItem('oensker_invite_code', inviteCode);
+    } else {
+      // Retrieve the saved code if no URL parameter exists
+      inviteCode = localStorage.getItem('oensker_invite_code');
+    }
     
     if (inviteCode) {
-      // If there is an invite code, attach it to the "Create List" button
       const createBtn = document.getElementById('createListBtn');
       if (createBtn) {
         createBtn.href = `/newlist-p2q8.html?invite=${inviteCode}`;
