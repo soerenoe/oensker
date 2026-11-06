@@ -39,6 +39,24 @@
       <div id="generatedCode" style="font-size: 0.85rem; color: var(--text-muted); font-style: italic; word-break: break-all;"></div>
     </div>
 
+    <div class="card" style="margin-top: 1.5rem;">
+      <h2>Aktive skabere</h2>
+      <p class="hint">Her kan du se og kopiere links til alle de personer, du har inviteret.</p>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Navn</th>
+            <th>Invite Link</th>
+            <th>Oprettet</th>
+            <th>Handling</th>
+          </tr>
+        </thead>
+        <tbody id="creatorsListBody">
+          <!-- Creators injected via JS -->
+        </tbody>
+      </table>
+    </div>
+
     <table class="admin-table">
       <thead>
         <tr>
@@ -126,8 +144,45 @@
           copyBtn.textContent = 'Link kopieret!';
           setTimeout(() => copyBtn.textContent = 'Kopier link', 2000);
         };
+        loadCreators();
       }
     });
+
+    async function loadCreators() {
+      const res = await fetch(`/admin/creators?auth=${adminPassword}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      
+      const tbody = document.getElementById('creatorsListBody');
+      tbody.innerHTML = data.creators.map(c => {
+        const fullUrl = `${location.origin}/dashboard-x7y2.html?invite=${c.invite_code}`;
+        return `
+        <tr>
+          <td>${c.name}</td>
+          <td>
+            <button class="btn secondary" style="width: auto; padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="copyCreatorLink('${fullUrl}', this)">Kopiér link</button>
+          </td>
+          <td>${new Date(c.created_at).toLocaleDateString('da-DK')}</td>
+          <td><button class="btn danger" style="width: auto; padding: 0.2rem 0.5rem;" onclick="deleteCreator('${c.creator_id}')">Slet</button></td>
+        </tr>
+      `}).join('');
+    }
+
+    function copyCreatorLink(url, btn) {
+      navigator.clipboard.writeText(url);
+      const originalText = btn.textContent;
+      btn.textContent = 'Kopieret!';
+      setTimeout(() => btn.textContent = originalText, 2000);
+    }
+
+    async function deleteCreator(id) {
+      if (!confirm("Er du sikker på, at du vil slette denne skaber? De vil ikke længere kunne oprette nye lister.")) return;
+      await fetch(`/admin/creators/${id}?auth=${adminPassword}`, { method: 'DELETE' });
+      loadCreators();
+    }
+
+    // Call loadCreators alongside loadAdmin at the bottom of your script
+    loadCreators();
 
     loadAdmin();
   </script>

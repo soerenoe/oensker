@@ -22,7 +22,7 @@
     <!-- Lists injected here -->
   </div>
 
-  <a href="/newlist-p2q8.html" class="btn" style="margin-top: 1rem;" data-i18n="btn_create_new">Opret en ny ønskeliste</a>
+  <a href="/newlist-p2q8.html" id="createListBtn" class="btn" style="margin-top: 1rem;" data-i18n="btn_create_new">Opret en ny ønskeliste</a>
 
   <!-- Edit List Modal -->
   <div id="editListModal" class="modal-overlay">
@@ -46,6 +46,18 @@
   </div>
 
   <script>
+    // Check if an invite code was passed from the Admin link
+    const urlParams = new URLSearchParams(location.search);
+    const inviteCode = urlParams.get('invite');
+    
+    if (inviteCode) {
+      // If there is an invite code, attach it to the "Create List" button
+      const createBtn = document.getElementById('createListBtn');
+      if (createBtn) {
+        createBtn.href = `/newlist-p2q8.html?invite=${inviteCode}`;
+      }
+    }
+
     const translations = {
       da: {
         page_title: "Ønsker – Mine ønskelister",
@@ -126,15 +138,15 @@
             subtitle = l.event_name;
           }
 
+          const creatorUrl = `/creator-w5n1.html?list=${encodeURIComponent(l.id)}&token=${encodeURIComponent(l.token)}`;
+          
           return `
-          <div class="card">
+          <div class="card clickable-card" data-url="${creatorUrl}">
             <h2>${escapeHtml(l.title || t.no_title)}</h2>
             <div class="date-badge">${escapeHtml(subtitle)}</div>
             <div class="actions">
-              <a class="btn" href="/creator-w5n1.html?list=${encodeURIComponent(l.id)}&token=${encodeURIComponent(l.token)}">${t.btn_edit}</a>
               <button class="btn secondary" data-editinfo="${l.id}">${t.btn_edit_info}</button>
               <button class="btn secondary" data-copy="${l.id}">${t.btn_share}</button>
-              <button class="btn danger" data-delete="${l.id}">${t.btn_delete}</button>
             </div>
           </div>
           `;
@@ -150,7 +162,6 @@
 
     container.addEventListener('click', async (e) => {
       const copyId = e.target.dataset.copy;
-      const delId = e.target.dataset.delete;
       const editInfoId = e.target.dataset.editinfo;
       
       if (copyId) {
@@ -166,22 +177,7 @@
           setTimeout(() => e.target.textContent = t.btn_share, 1500);
         }
       }
-
-      if (delId) {
-        if (!confirm(t.confirm_delete)) return;
-        const list = lists.find(x => x.id === delId);
-        try {
-          await fetch(`/lists/${encodeURIComponent(list.id)}`, { 
-            method: 'DELETE', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ creator_token: list.token }) 
-          });
-        } catch (err) { console.warn('Delete failed', err); }
-        lists = lists.filter(x => x.id !== delId);
-        localStorage.setItem('oensker_lists', JSON.stringify(lists));
-        location.reload();
-      }
-
+      
       if (editInfoId) {
         const list = lists.find(x => x.id === editInfoId);
         document.getElementById('editListTitle').value = list.title || '';
