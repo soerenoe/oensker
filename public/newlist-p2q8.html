@@ -30,26 +30,45 @@
     <button type="submit" class="btn">Opret listen</button>
   </form>
 
-  <script>
+<script>
+    // 1. Check for invite code in URL, then fallback to localStorage (for PWA)
+    const urlParams = new URLSearchParams(location.search);
+    let inviteCode = urlParams.get('invite') || localStorage.getItem('oensker_invite_code');
+
+    if (inviteCode) {
+      // Save it for future PWA visits
+      localStorage.setItem('oensker_invite_code', inviteCode);
+    } else {
+      // If no code is found, show a login prompt instead of a 404
+      document.getElementById('createForm').style.display = 'none';
+      document.getElementById('pageTitle').textContent = 'Log ind';
+      
+      const loginDiv = document.createElement('div');
+      loginDiv.innerHTML = `
+        <p class="hint" style="color: var(--danger); margin-bottom: 1rem;">Du skal indtaste din invitationskode for at oprette en ønskeliste.</p>
+        <input type="text" id="manualInviteCode" placeholder="Indtast kode her..." style="margin-bottom: 1rem;">
+        <button id="manualLoginBtn" class="btn" type="button">Log ind</button>
+      `;
+      document.getElementById('pageTitle').parentNode.insertBefore(loginDiv, document.getElementById('createForm'));
+
+      document.getElementById('manualLoginBtn').addEventListener('click', () => {
+        const code = document.getElementById('manualInviteCode').value.trim();
+        if (code) {
+          localStorage.setItem('oensker_invite_code', code);
+          window.location.reload(); 
+        }
+      });
+    }
+
+    // 2. Handle form submission
     document.getElementById('createForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const params = new URLSearchParams(location.search);
-      const inviteCode = params.get('invite');
-
-      // If no invite code is present in the URL, lock the page
+      
       if (!inviteCode) {
-        document.getElementById('createForm').style.display = 'none';
-        document.getElementById('pageTitle').textContent = 'Adgang nægtet';
-        
-        const warning = document.createElement('p');
-        warning.className = 'hint';
-        warning.style.color = 'var(--danger)';
-        warning.textContent = 'Du skal bruge et gyldigt invitationslink for at oprette en ønskeliste. Kontakt administratoren for at få et link.';
-        
-        document.getElementById('pageTitle').parentNode.insertBefore(warning, document.getElementById('createForm'));
+        alert("Der skete en fejl: Invitationskode mangler.");
+        return;
       }
 
-      const invite_code = inviteCode; // Uses the code from the URL
       const creator_name = document.getElementById('creator_name').value;
       const title = document.getElementById('title').value;
       const event_date = document.getElementById('event_date').value;
@@ -58,12 +77,11 @@
       const res = await fetch('/lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invite_code, creator_name, title, event_name, event_date })
+        body: JSON.stringify({ invite_code: inviteCode, creator_name, title, event_name, event_date })
       });
 
       const data = await res.json();
 
-      // STOP if the server failed!
       if (!res.ok || !data.list_id) {
         alert("Der skete en fejl: " + (data.error || "Kunne ikke oprette listen"));
         console.error("Server response:", data);
@@ -71,8 +89,6 @@
       }
 
       const creatorUrl = `${location.origin}/creator-w5n1.html?list=${data.list_id}&token=${data.creator_token}`;
-
-      const guestUrl = `${location.origin}/guest-t3z6.html?list=${data.list_id}`;
 
       // Save to browser dashboard
       try {
@@ -86,23 +102,12 @@
           created_at: new Date().toISOString()
         });
         localStorage.setItem('oensker_lists', JSON.stringify(stored));
-      } catch (e) {
-        console.error('Kunne ikke gemme listen lokalt', e);
+      } catch (err) {
+        console.error('Kunne ikke gemme listen lokalt', err);
       }
 
       window.location.href = creatorUrl;
     });
-
-    // Get invite code from URL
-    const urlParams = new URLSearchParams(location.search);
-    const inviteCode = urlParams.get('invite');
-
-    if (!inviteCode) {
-      document.body.innerHTML = '<div style="text-align: center; margin-top: 5rem; font-family: system-ui;"><h1>404 Not Found</h1><p>The requested URL was not found on this server.</p></div>';
-      // Stop executing the rest of the script
-      throw new Error("No invite code");
-    }
-
   </script>
 </body>
 </html>

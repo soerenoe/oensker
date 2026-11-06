@@ -17,11 +17,6 @@ export default {
 				return new Response("Not Found", { status: 404 });
 			}
 
-			// Block the creator page if there is no invite code in the URL
-			if (path === "/newlist-p2q8.html" && !url.searchParams.has("invite")) {
-				return new Response("Not Found", { status: 404 });
-			}
-
 			// POST /admin/creators — generate a new invite code
 			if (path === "/admin/creators" && method === "POST") {
 				const body = await request.json();
