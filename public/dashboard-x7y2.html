@@ -166,11 +166,14 @@
     }
 
     container.addEventListener('click', async (e) => {
-      const copyId = e.target.dataset.copy;
-      const editInfoId = e.target.dataset.editinfo;
+      const copyBtn = e.target.closest('[data-copy]');
+      const editBtn = e.target.closest('[data-editinfo]');
       const card = e.target.closest('.clickable-card');
 
-      if (copyId) {
+      // 1. Handle Copy Button
+      if (copyBtn) {
+        e.preventDefault();
+        const copyId = copyBtn.dataset.copy;
         const list = lists.find(x => x.id === copyId);
         const url = `${location.origin}/guest-t3z6.html?list=${encodeURIComponent(list.id)}`;
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -179,12 +182,16 @@
           try { await navigator.share({ title: list.title, url: url }); } catch (err) { }
         } else {
           await navigator.clipboard.writeText(url);
-          e.target.textContent = t.btn_share_copied;
-          setTimeout(() => e.target.textContent = t.btn_share, 1500);
+          copyBtn.textContent = t.btn_share_copied;
+          setTimeout(() => copyBtn.textContent = t.btn_share, 1500);
         }
+        return; // STOP execution here so it doesn't redirect
       }
-      
-      if (editInfoId) {
+
+      // 2. Handle Edit Info Button
+      if (editBtn) {
+        e.preventDefault();
+        const editInfoId = editBtn.dataset.editinfo;
         const list = lists.find(x => x.id === editInfoId);
         document.getElementById('editListTitle').value = list.title || '';
         document.getElementById('editListEventName').value = list.event_name || '';
@@ -193,9 +200,11 @@
         const modal = document.getElementById('editListModal');
         modal.style.display = 'flex';
         modal.dataset.currentListId = editInfoId;
+        return; // STOP execution here so it doesn't redirect
       }
 
-      if (card) {
+      // 3. Handle Card Click (Redirect)
+      if (card && card.dataset.url) {
         window.location.href = card.dataset.url;
       }
     });
