@@ -169,10 +169,6 @@
       const card = e.target.closest('.clickable-card');
       const copyId = e.target.dataset.copy;
       const editInfoId = e.target.dataset.editinfo;
-      
-      if (card) {
-        window.location.href = card.dataset.url;
-      }
 
       if (copyId) {
         const list = lists.find(x => x.id === copyId);
@@ -197,6 +193,10 @@
         const modal = document.getElementById('editListModal');
         modal.style.display = 'flex';
         modal.dataset.currentListId = editInfoId;
+      }
+
+      if (card) {
+        window.location.href = card.dataset.url;
       }
     });
 
