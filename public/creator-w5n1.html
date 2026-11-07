@@ -170,7 +170,10 @@
       }
       try {
         const res = await fetch(`/lists/${listId}/creator?creator_token=${creatorToken}`);
-        if (!res.ok) throw new Error('Kunne ikke hente listen');
+        if (!res.ok) {
+          document.getElementById('listTitle').textContent = 'Fejl: Kunne ikke hente listen (Kode: ' + res.status + ')';
+          return;
+        }
         const data = await res.json();
 
         const titleEl = document.getElementById('listTitle');

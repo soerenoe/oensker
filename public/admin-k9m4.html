@@ -46,6 +46,7 @@
         <thead>
           <tr>
             <th>Navn</th>
+            <th>Kode</th>
             <th>Invite Link</th>
             <th>Oprettet</th>
             <th>Handling</th>
@@ -159,6 +160,7 @@
         return `
         <tr>
           <td>${c.name}</td>
+          <td><code style="background: #eee; padding: 0.2rem 0.4rem; border-radius: 4px;">${c.invite_code}</code></td>
           <td>
             <button class="btn secondary" style="width: auto; padding: 0.2rem 0.5rem; font-size: 0.8rem;" onclick="copyCreatorLink('${fullUrl}', this)">Kopiér link</button>
           </td>
