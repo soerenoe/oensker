@@ -101,28 +101,32 @@
     const container = document.getElementById('lists-container');
     let lists = JSON.parse(localStorage.getItem('oensker_lists') || '[]');
 
-    async function verifyLists() {
-      if (lists.length === 0) return;
-      let changed = false;
-      const validLists = [];
-      
-      for (const l of lists) {
-        try {
-          const res = await fetch(`/lists/${l.id}/creator?creator_token=${l.token}`);
-          if (res.ok) {
-            validLists.push(l);
-          } else {
-            changed = true; // List was deleted from DB or is invalid
-          }
-        } catch (e) {
-          validLists.push(l); // Keep on network error to be safe
-        }
-      }
-      
-      if (changed) {
-        lists = validLists;
+    async function syncListsFromDB() {
+      const inviteCode = localStorage.getItem('oensker_invite_code');
+      if (!inviteCode) return;
+
+      try {
+        const res = await fetch(`/my-lists?invite_code=${inviteCode}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        // Convert the database format back to the format the dashboard expects
+        const dbLists = data.lists.map(l => ({
+          id: l.list_id,
+          token: l.creator_token,
+          title: l.title,
+          event_name: l.event_name,
+          event_date: l.event_date,
+          created_at: l.created_at
+        }));
+
+        // Overwrite local storage with the fresh database data
+        lists = dbLists;
         localStorage.setItem('oensker_lists', JSON.stringify(lists));
-        renderDashboard(); // Re-render without reloading the page
+        renderDashboard(); 
+        
+      } catch (err) {
+        console.error("Kunne ikke synkronisere med databasen", err);
       }
     }
 
@@ -160,12 +164,6 @@
         }).join('');
       }
     }
-
-    // Initial render
-    renderDashboard();
-
-    // Check if lists still exist on server
-    verifyLists();
 
     container.addEventListener('click', async (e) => {
       const copyId = e.target.dataset.copy;
@@ -244,6 +242,13 @@
         }
       });
     }
+
+    // Initial render (loads from local storage instantly to avoid flash of empty screen)
+    renderDashboard();
+
+    // Sync with the database in the background (restores iOS PWA data)
+    syncListsFromDB();
+
   </script>
 
 </body>
