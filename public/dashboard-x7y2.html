@@ -166,9 +166,14 @@
     }
 
     container.addEventListener('click', async (e) => {
+      const card = e.target.closest('.clickable-card');
       const copyId = e.target.dataset.copy;
       const editInfoId = e.target.dataset.editinfo;
       
+      if (card) {
+        window.location.href = card.dataset.url;
+      }
+
       if (copyId) {
         const list = lists.find(x => x.id === copyId);
         const url = `${location.origin}/guest-t3z6.html?list=${encodeURIComponent(list.id)}`;
