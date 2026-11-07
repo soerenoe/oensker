@@ -23,7 +23,8 @@ body {
   line-height: 1.6;
   max-width: 600px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  /* Fluid padding: scales between 1rem and 2rem based on screen width */
+  padding: clamp(1rem, 5vw, 2rem) clamp(1rem, 4vw, 1.5rem);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -34,14 +35,14 @@ h1, h2, h3 {
   margin-top: 0;
 }
 
-h1 { font-size: 2rem; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
-h2 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+h1 { font-size: clamp(1.5rem, 4vw, 2rem); margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+h2 { font-size: clamp(1.2rem, 3vw, 1.4rem); margin-bottom: 0.25rem; }
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 .hint {
-  font-size: 0.95rem;
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
   color: var(--text-muted);
   margin-bottom: 2rem;
   font-style: italic;
@@ -51,7 +52,7 @@ a:hover { text-decoration: underline; }
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: clamp(1rem, 4vw, 1.5rem);
   margin-bottom: 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
@@ -136,7 +137,7 @@ input[type="number"] {
 
 .actions .btn { 
   width: auto; 
-  flex: 1 1 100px;
+  flex: 1 1 120px; /* Grow, shrink, but try to stay at least 120px wide */
   white-space: normal;
   text-align: center;
 }
@@ -167,7 +168,7 @@ input[type="number"] {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
-  margin-top: 0.5rem; /* Reduced from 0.75rem to keep it tight to the price */
+  margin-top: 0.75rem;
   align-self: center;
 }
 
@@ -197,38 +198,42 @@ input[type="number"] {
   text-align: center;
   width: 100%;
   box-sizing: border-box;
-  break-inside: avoid; /* Stops the card from breaking across columns */
-  margin-bottom: 1.5rem; /* THIS adds the vertical spacing between cards */
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
 }
 
 .item-card:hover {
   border-color: var(--accent);
 }
 
-/* Image sizing */
+.item-name {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: var(--text-main);
+}
+
+.item-footer {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Item Card Media */
+.media-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
 .item-img {
   max-width: 100%;
   max-height: 120px;
   object-fit: contain;
   border-radius: 6px;
   display: block;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-/* Make cards with images span 2 rows */
-.item-card.has-image {
-  grid-row: span 2;
-}
-
-/* Make the image container fill extra space */
-.item-card.has-image .media-container {
-  flex-grow: 1; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  margin: 0.5rem 0;
 }
 
 .link-btn {
@@ -250,32 +255,36 @@ input[type="number"] {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1rem; /* Adds breathing room on small screens */
 }
 
 .modal-box {
   background: var(--bg-paper);
-  padding: 2rem;
+  padding: clamp(1.5rem, 5vw, 2rem);
   border-radius: 8px;
   width: 100%;
-  max-width: 450px;
+  max-width: 500px; /* Slightly wider for tablets */
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  margin: 1rem;
   position: relative;
+  max-height: 90vh; /* Prevents it from going off-screen */
+  overflow-y: auto; /* Allows scrolling if content is too tall */
 }
 
 .modal-box p {
   margin: 0.5rem 0;
 }
 
-.modal-actions {
+/* Stack modal buttons gracefully if screen is small */
+.modal-actions, .modal-box .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 1.5rem;
 }
 
-.modal-actions .btn {
+.modal-actions .btn, .modal-box .actions .btn {
   width: auto;
-  flex: 1;
+  flex: 1 1 120px; /* Allow them to wrap into two rows on mobile */
 }
 
 /* Upload Dropzone */
@@ -303,21 +312,10 @@ input[type="number"] {
 
 .upload-preview {
   display: none;
-  max-width: 200px;
+  max-width: 100%;
   max-height: 200px;
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 1rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-/* Clickable Dashboard Cards */
-.clickable-card {
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.clickable-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
