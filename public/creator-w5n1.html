@@ -183,7 +183,7 @@
         data.items.forEach(item => {
           const card = document.createElement('div');
           // Add the 'has-image' class if there is a photo URL
-          const hasImage = item.photo_url && item.photo_url.startsWith('/images/');
+          const hasImage = item.photo_url && item.photo_url.includes('/images/');
           card.className = 'item-card' + (hasImage ? ' has-image' : '');
           
           let dateText = '';
@@ -196,7 +196,7 @@
           let imgTag = '';
           
           // Strict check: Only render if it's an actual uploaded image path
-          if (item.photo_url && item.photo_url.startsWith('/images/')) {
+          if (item.photo_url && item.photo_url.includes('/images/')) {
             imgTag = `<img src="${item.photo_url}" class="item-img">`;
           }
           
@@ -402,9 +402,10 @@
       let photo_url = null;
       const editImgPreview = document.getElementById('editImagePreview');
       
-      // Only grab the image if it actually exists and is a real image path
       if (editImgPreview.style.display !== 'none' && editImgPreview.src && editImgPreview.src.includes('/images/')) {
-        photo_url = editImgPreview.src;
+        // Extract just the /images/... part so the database stays clean
+        const urlParts = editImgPreview.src.split('/images/');
+        photo_url = '/images/' + urlParts[1]; 
       }
       
       const fileInput = document.getElementById('editImage');

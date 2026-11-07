@@ -87,7 +87,7 @@
 
         const card = document.createElement('div');
         // Add the 'has-image' class if there is a photo URL
-        const hasImage = item.photo_url && item.photo_url.startsWith('/images/');
+        const hasImage = item.photo_url && item.photo_url.includes('/images/');
         card.className = 'item-card' + (hasImage ? ' has-image' : '') + (isMine ? ' mine' : '');
         
         let dateText = '';
@@ -101,7 +101,7 @@
         let imgTag = '';
         
         // Strict check: Only render if it's an actual uploaded image path
-        if (item.photo_url && item.photo_url.startsWith('/images/')) {
+        if (item.photo_url && item.photo_url.includes('/images/')) {
           imgTag = `<img src="${item.photo_url}" class="item-img">`;
         }
         
