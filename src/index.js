@@ -53,6 +53,26 @@ export default {
 				return json({ success: true });
 			}
 
+			// GET /my-lists — fetch all lists for a creator
+			if (path === "/my-lists" && method === "GET") {
+				const invite_code = url.searchParams.get("invite_code");
+				if (!invite_code) return json({ error: "Missing invite code" }, 400);
+
+				const creator = await env.oensker_db
+					.prepare("SELECT creator_id FROM creators WHERE invite_code = ?")
+					.bind(invite_code)
+					.first();
+
+				if (!creator) return json({ error: "Invalid invite code" }, 401);
+
+				const lists = await env.oensker_db
+					.prepare("SELECT * FROM lists WHERE creator_id = ? ORDER BY created_at DESC")
+					.bind(creator.creator_id)
+					.all();
+
+				return json({ lists: lists.results });
+			}			
+
 			// POST /lists — create a new list
 			if (path === "/lists" && method === "POST") {
 				const body = await request.json();
