@@ -22,6 +22,7 @@ CREATE TABLE items (
   item_id TEXT PRIMARY KEY,
   list_id TEXT NOT NULL,
   name TEXT NOT NULL,
+  store TEXT,
   photo_url TEXT,
   price TEXT,
   category TEXT,
