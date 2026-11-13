@@ -24,7 +24,9 @@
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-box">
       <h2 id="modalName"></h2>
-      
+
+      <div id="modalStore" class="item-store" style="font-size: 1rem; margin-bottom: 0.5rem;"></div>      
+
       <img id="modalImage" style="display: none; max-width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; margin-bottom: 1rem;">
       
       <div style="margin: 1rem 0;">
@@ -111,7 +113,9 @@
 
         card.innerHTML = `
           <div class="item-name">${item.name}</div>
+          ${item.store ? `<div class="item-store">${item.store}</div>` : ''}
           ${mediaHtml}
+          ${item.remark ? `<div class="item-remark-preview">${item.remark}</div>` : ''}
           <div class="item-footer">
             <div>${item.price ? item.price + ' kr.' : ''}</div>
           </div>
@@ -126,6 +130,14 @@
 
     function openItemModal(item, isMine, isReserved) {
       document.getElementById('modalName').textContent = item.name;
+      
+      const storeEl = document.getElementById('modalStore');
+      if (item.store) {
+        storeEl.textContent = item.store;
+        storeEl.style.display = 'block';
+      } else {
+        storeEl.style.display = 'none';
+      }
       
       // Handle the Image in the modal
       const modalImg = document.getElementById('modalImage');

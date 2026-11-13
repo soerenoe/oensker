@@ -214,7 +214,7 @@ export default {
 				const list_id = path.split("/")[2];
 
 				const list = await env.oensker_db
-					.prepare("SELECT title, event_date, creator_name FROM lists WHERE list_id = ?")
+					.prepare("SELECT title, event_name, event_date, creator_name FROM lists WHERE list_id = ?")
 					.bind(list_id)
 					.first();
 
@@ -241,6 +241,7 @@ export default {
 
 				return json({
 					title: list.title,
+					event_name: list.event_name,
 					event_date: list.event_date,
 					creator_name: list.creator_name,
 					items: items.results,
@@ -266,18 +267,19 @@ export default {
 
 				await env.oensker_db
 					.prepare(
-						`INSERT INTO items (item_id, list_id, name, photo_url, price, category, remark, link, created_at)
-						 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+						`INSERT INTO items (item_id, list_id, name, store, photo_url, price, category, remark, link, created_at) 
+						VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 					)
 					.bind(
-						item_id,
-						list_id,
-						body.name,
-						body.photo_url || null,
-						body.price || null,
-						body.category || null,
-						body.remark || null,
-						body.link || null,
+						item_id, 
+						list_id, 
+						body.name, 
+						body.store || null, 
+						body.photo_url || null, 
+						body.price || null, 
+						body.category || null, 
+						body.remark || null, 
+						body.link || null, 
 						created_at
 					)
 					.run();
@@ -382,16 +384,17 @@ export default {
 
 				await env.oensker_db
 					.prepare(
-						`UPDATE items SET name = ?, price = ?, category = ?, remark = ?, link = ?, photo_url = ?
-						 WHERE item_id = ?`
+						`UPDATE items SET name = ?, store = ?, price = ?, category = ?, remark = ?, link = ?, photo_url = ? 
+						WHERE item_id = ?`
 					)
 					.bind(
-						body.name,
-						body.price || null,
-						body.category || null,
-						body.remark || null,
-						body.link || null,
-						body.photo_url || null,
+						body.name, 
+						body.store || null, 
+						body.price || null, 
+						body.category || null, 
+						body.remark || null, 
+						body.link || null, 
+						body.photo_url || null, 
 						item_id
 					)
 					.run();

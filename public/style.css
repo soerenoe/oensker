@@ -319,3 +319,17 @@ input[type="number"] {
   margin-bottom: 1rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
+
+.item-remark-preview {
+  font-size: 0.75rem;          /* Very small */
+  color: var(--text-muted);
+  opacity: 0.7;                /* Faded */
+  font-style: italic;          /* Looks like a side note */
+  white-space: nowrap;         /* Forces it to one line */
+  overflow: hidden;            /* Hides the overflow */
+  text-overflow: ellipsis;     /* Adds the "..." */
+  width: 90%;                  /* Keeps it inside the card */
+  max-width: 200px;            /* Prevents it from getting too wide */
+  margin: 0.5rem auto 0;       /* Centers it under the image with space above */
+  display: block;
+}

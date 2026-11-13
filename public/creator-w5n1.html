@@ -62,6 +62,9 @@
     <form id="addForm">
       <label for="addName">Ønske</label>
       <input type="text" id="addName" required>
+
+      <label for="addStore">Butik (valgfrit)</label>
+      <input type="text" id="addStore">
       
       <label>Billede (valgfrit)</label>
       <div id="addImageWrapper">
@@ -109,7 +112,10 @@
       
       <label for="editName">Navn</label>
       <input type="text" id="editName">
-      
+
+      <label for="editStore">Butik (valgfrit)</label>
+      <input type="text" id="editStore">
+
       <label>Billede (valgfrit)</label>
       <div id="editImageWrapper">
         <div id="editDropzoneContainer" style="display: flex; gap: 0.5rem; align-items: stretch; margin-bottom: 1.25rem;">
@@ -206,7 +212,9 @@
 
           card.innerHTML = `
             <div class="item-name">${item.name}</div>
+            ${item.store ? `<div class="item-store">${item.store}</div>` : ''}
             ${mediaHtml}
+            ${item.remark ? `<div class="item-remark-preview">${item.remark}</div>` : ''}
             <div class="item-footer">
               <div>${item.price ? item.price + ' kr.' : ''}</div>
             </div>
@@ -350,6 +358,7 @@
       const body = {
         creator_token: creatorToken,
         name: document.getElementById('addName').value,
+        store: document.getElementById('addStore').value || null,
         price: document.getElementById('addPrice').value || null,
         remark: document.getElementById('addRemark').value || null,
         link: document.getElementById('addLink').value || null,
@@ -372,6 +381,7 @@
     function openEditModal(item) {
       currentEditId = item.item_id;
       document.getElementById('editName').value = item.name || '';
+      document.getElementById('editStore').value = item.store || '';
       document.getElementById('editPrice').value = item.price || '';
       document.getElementById('editRemark').value = item.remark || '';
       
@@ -423,6 +433,7 @@
       const body = {
         creator_token: creatorToken,
         name: document.getElementById('editName').value,
+        store: document.getElementById('editStore').value || null,
         price: document.getElementById('editPrice').value || null,
         remark: document.getElementById('editRemark').value || null,
         link: document.getElementById('editLink').value || null,
