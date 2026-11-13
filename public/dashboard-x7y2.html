@@ -29,9 +29,6 @@
     <div class="modal-box">
       <h2>Rediger listeoplysninger</h2>
       
-      <label for="editListTitle">Listens titel</label>
-      <input type="text" id="editListTitle">
-      
       <label for="editListEventName">Begivenhedens navn</label>
       <input type="text" id="editListEventName" placeholder="f.eks. Jul">
       
@@ -141,8 +138,10 @@
       } else {
         container.innerHTML = lists.map(l => {
           let subtitle = t.no_date;
+          const isJul = l.event_name && l.event_name.toLowerCase().trim() === 'jul';
+          
           if (l.event_name && l.event_date) {
-            subtitle = `${l.event_name} • ${formatDanishDate(l.event_date)}`;
+            subtitle = isJul ? l.event_name : `${l.event_name} • ${formatDanishDate(l.event_date)}`;
           } else if (l.event_date) {
             subtitle = formatDanishDate(l.event_date);
           } else if (l.event_name) {
@@ -193,7 +192,6 @@
         e.preventDefault();
         const editInfoId = editBtn.dataset.editinfo;
         const list = lists.find(x => x.id === editInfoId);
-        document.getElementById('editListTitle').value = list.title || '';
         document.getElementById('editListEventName').value = list.event_name || '';
         document.getElementById('editListEventDate').value = list.event_date || '';
         
@@ -229,9 +227,11 @@
         const listId = editListModal.dataset.currentListId;
         const list = lists.find(x => x.id === listId);
         
-        const newTitle = document.getElementById('editListTitle').value;
         const newEventName = document.getElementById('editListEventName').value;
         const newEventDate = document.getElementById('editListEventDate').value;
+        
+        // Automatically set title to event name
+        const newTitle = newEventName.trim() !== '' ? newEventName : 'Ønskeliste';
         
         const res = await fetch(`/lists/${listId}`, {
           method: 'PATCH',

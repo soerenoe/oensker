@@ -17,9 +17,6 @@
   <form id="createForm">
     <label for="creator_name">Dit navn</label>
     <input type="text" id="creator_name">
-    
-    <label for="title">Listens titel</label>
-    <input type="text" id="title">
 
     <label for="event_name">Begivenhedens navn</label>
     <input type="text" id="event_name">
@@ -70,9 +67,11 @@
       }
 
       const creator_name = document.getElementById('creator_name').value;
-      const title = document.getElementById('title').value;
       const event_date = document.getElementById('event_date').value;
       const event_name = document.getElementById('event_name').value;
+
+      // Automatically set the title to the event name, or default to "Ønskeliste"
+      const title = event_name.trim() !== '' ? event_name : 'Ønskeliste';
 
       const res = await fetch('/lists', {
         method: 'POST',

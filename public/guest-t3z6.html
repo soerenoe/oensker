@@ -78,10 +78,14 @@
 
       let dateStr = data.event_date ? formatDanishDate(data.event_date) : '';
       let eventStr = data.event_name ? data.event_name : '';
+      const isJul = eventStr.toLowerCase().trim() === 'jul';
+      
       let finalString = '';
-      if (eventStr && dateStr) finalString = `Til ${eventStr} ${dateStr}`;
+      if (eventStr && dateStr && !isJul) finalString = `Til ${eventStr} ${dateStr}`;
+      else if (eventStr && isJul) finalString = `Til ${eventStr}`; // Just "Til Jul"
       else if (dateStr) finalString = `Til ${dateStr}`;
       else if (eventStr) finalString = `Til ${eventStr}`;
+      
       document.getElementById('eventDate').textContent = finalString;
 
       const itemsList = document.getElementById('itemsList');
