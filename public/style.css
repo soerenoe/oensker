@@ -200,6 +200,8 @@ input[type="number"] {
   box-sizing: border-box;
   break-inside: avoid;
   margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
 }
 
 .item-card:hover {
@@ -333,3 +335,48 @@ input[type="number"] {
   margin: 0.5rem auto 0;       /* Centers it under the image with space above */
   display: block;
 }
+
+/* Corner Ribbon for Links */
+.link-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(87, 143, 179, 0.85);
+  color: white;
+  font-size: 0.55rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 0.3rem 0.5rem;
+  border-top-right-radius: 7px;
+  border-bottom-left-radius: 6px;
+  line-height: 1.25;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px; /* This evenly spaces the text and icon */
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.link-badge:hover {
+  background: rgba(87, 143, 179, 1);
+}
+
+/* Full width CTA button for the modal */
+.btn-cta {
+  width: 100%;
+  background: var(--accent);
+  color: white;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-cta:hover { background: var(--accent-hover); }
